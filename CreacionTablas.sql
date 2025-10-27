@@ -5,20 +5,25 @@ use --nombre database
 
 --Hay que crear schemas??
 
+drop table if exists pago
 create table pago (
 	id_pago int primary key,
 	fecha date,
 	cuenta_origen varchar(50),
 	importe decimal(10,2),
 	asociado bit not null,);
+go
 
+drop table if exists consorcio
 create table consorcio (
 	id_consorcio int primary key,
 	nombre varchar(35),
 	direccion varchar(35),
 	cant_UF int,
 	cant_m2 int,);
+go
 
+drop table if exists persona
 create table persona (
 	id_persona int primary key,
 	dni varchar(8) unique,
@@ -27,7 +32,9 @@ create table persona (
 	apellido varchar(50),
 	email_personal varchar(30),
 	telefono_contacto varchar(20),);
+go
 
+drop table if exists estadoFinanciero
 create table estadoFinanciero (
 	id int,
 	id_consorcio int,
@@ -40,7 +47,9 @@ create table estadoFinanciero (
 	periodo date,
 	primary key (id, id_consorcio),
 	constraint fk_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
+go
 
+drop table if exists unidadFuncional
 create table unidadFuncional (
 	id_uf int primary key,
 	id_consorcio int,
@@ -54,7 +63,9 @@ create table unidadFuncional (
 	--Coeficiente ????
 	constraint fk_uf_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio)
 	);
+go
 
+drop table if exists personaUf
 create table personaUf (
 	id_relacion int primary key,
 	dni_persona varchar(8) unique,
@@ -65,7 +76,9 @@ create table personaUf (
 	constraint fk_personaUf_dni foreign key (dni_persona) references persona (dni),
 	constraint fk_personaUf_id_uf foreign key (id_uf) references unidadFuncional (id_uf)
 	);
+go
 
+drop table if exists expensa
 create table expensa (
 	id_expensa int primary key,
 	id_consorcio int,
@@ -74,7 +87,9 @@ create table expensa (
 	constraint fk_expensa_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio),
 	constraint fk_expensa_id_persona foreign key (id_persona) references persona (id_persona),
 	constraint fk_expensa_id_uf foreign key (id_uf) references unidadFuncional (id_uf));
+go
 
+drop table if exists gasto
 create table gasto (
 	id_gasto int primary key,
 	id_expensa int,
@@ -83,7 +98,9 @@ create table gasto (
 	subtotal_ordinarios decimal(10,2),
 	subtotal_extraordinarios decimal(10,2)
 	constraint fk_gasto_id_expensa foreign key (id_expensa) references expensa (id_expensa));
+go
 
+drop table if exists estadoCuentaProrrateo
 create table estadoCuentaProrrateo (
 	id_detalleDeCuenta int primary key,
 	id_expensa int,
@@ -105,8 +122,10 @@ create table estadoCuentaProrrateo (
 	foreign key (id_uf) references unidadFuncional (id_uf),
 	constraint fk_estadoCuentaProrrateo_id_pago
 	foreign key (id_pago) references pago (id_pago));
+go
 
-create table gastosOrdinarios (
+drop table if exists gastoOrdinario
+create table gastoOrdinario (
 	id_gastoOrdinario int primary key,
 	id_gasto int,
 	--fecha_gasto date, //Si queremos ponerlo aca hay que hacerlo UNIQUE en table gasto.
@@ -121,8 +140,10 @@ create table gastosOrdinarios (
 	--constraint fk_gastoOrdinario_fecha_gasto 
 	--foreign key (fecha_gasto) references gasto (fecha),
 	);
+go
 
-create table gastosExtraordinarios (
+drop table if exists gastoExtraordinario
+create table gastoExtraordinario (
 	id_gastoExtraordinario int primary key,
 	id_gasto int,
 	--fecha_gasto date, //Si queremos ponerlo aca hay que hecerlo UNIQUE en table gasto.
@@ -140,4 +161,4 @@ create table gastosExtraordinarios (
 	--constraint fk_gastoExtraordinario_fecha_gasto 
 	--foreign key (fecha_gasto) references gasto (fecha),
 	);
-
+go
