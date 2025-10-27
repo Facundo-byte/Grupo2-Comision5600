@@ -1,7 +1,7 @@
 create database Com5600G02 
 go 
 
-use --nombre database
+use Com5600G02
 
 --Hay que crear schemas??
 
