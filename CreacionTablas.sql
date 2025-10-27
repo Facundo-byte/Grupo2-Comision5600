@@ -1,4 +1,4 @@
-create database --nombre data base
+create database Com5600G02 
 go 
 
 use --nombre database
