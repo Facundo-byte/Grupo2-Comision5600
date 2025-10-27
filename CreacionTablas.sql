@@ -1,7 +1,7 @@
-create database --nombre data base
+create database Com5600G02
 go 
 
-use --nombre database
+use Com5600G02
 
 --Hay que crear schemas??
 
@@ -25,13 +25,14 @@ go
 
 drop table if exists persona
 create table persona (
-	id_persona int primary key,
-	dni varchar(8) unique,
-	cuenta varchar(50),
+	id_persona int identity(1,1) primary key,
 	nombre varchar(50),
 	apellido varchar(50),
-	email_personal varchar(30),
-	telefono_contacto varchar(20),);
+	dni varchar(9) unique,
+	email_personal varchar(50),
+	telefono_contacto varchar(20),
+	cuenta varchar(50),
+	inquilino bit);
 go
 
 drop table if exists estadoFinanciero
@@ -46,7 +47,7 @@ create table estadoFinanciero (
 	saldo_Cierre decimal(10,2),
 	periodo date,
 	primary key (id, id_consorcio),
-	constraint fk_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
+	constraint fk_estadoFinanciero_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
 go
 
 drop table if exists unidadFuncional
@@ -68,7 +69,7 @@ go
 drop table if exists personaUf
 create table personaUf (
 	id_relacion int primary key,
-	dni_persona varchar(8) unique,
+	dni_persona varchar(9) unique,
 	id_uf int unique,
 	fecha_desde date unique,
 	fecha_hasta date,
@@ -110,7 +111,7 @@ create table estadoCuentaProrrateo (
 	fecha1erVenc date,
 	fecha2doVenc date,
 	saldoAnterior decimal(10,2),
-	--pagosRecibidos ???,
+	pagosRecibidos decimal(10,2),
 	deuda decimal(10,2),
 	interesPorMora decimal(10,2),
 	expensasOrdinarias decimal(10,2),
@@ -128,8 +129,6 @@ drop table if exists gastoOrdinario
 create table gastoOrdinario (
 	id_gastoOrdinario int primary key,
 	id_gasto int,
-	--fecha_gasto date, //Si queremos ponerlo aca hay que hacerlo UNIQUE en table gasto.
-	--					//pero se puede conseguir haciendo un JOIN con id_gasto por lo que no lo pondría aca pero idk
 	--tipo_gasto ???
 	--subtipoGasto ???
 	nombreEmpresa varchar(50),
@@ -137,8 +136,6 @@ create table gastoOrdinario (
 	importe decimal(10,2)
 	constraint fk_gastoOrdinario_id_gasto 
 	foreign key (id_gasto) references gasto (id_gasto),
-	--constraint fk_gastoOrdinario_fecha_gasto 
-	--foreign key (fecha_gasto) references gasto (fecha),
 	);
 go
 
@@ -146,8 +143,6 @@ drop table if exists gastoExtraordinario
 create table gastoExtraordinario (
 	id_gastoExtraordinario int primary key,
 	id_gasto int,
-	--fecha_gasto date, //Si queremos ponerlo aca hay que hecerlo UNIQUE en table gasto.
-	--					//pero se puede conseguir haciendo un JOIN con id_gasto
 	--tipo_gasto ???
 	--subtipoGasto ???
 	nombreEmpresa varchar(50),
@@ -158,7 +153,41 @@ create table gastoExtraordinario (
 	importe decimal(10,2)
 	constraint fk_gastoExtraordinario_id_gasto 
 	foreign key (id_gasto) references gasto (id_gasto),
-	--constraint fk_gastoExtraordinario_fecha_gasto 
-	--foreign key (fecha_gasto) references gasto (fecha),
 	);
 go
+
+
+--STORED PROCEDURES
+
+CREATE PROCEDURE sp_importar_personas
+AS
+BEGIN
+	CREATE TABLE #tempPersona (
+		nombre varchar(50),
+		apellido varchar(50),
+		dni varchar(9) unique,
+		email_personal varchar(50),
+		telefono_contacto varchar(20),
+		cuenta varchar(50),
+		inquilino bit);
+
+    BULK INSERT #tempPersona
+    FROM '' -- <-- PONER LA RUTA DE ACCESO AL ARCHIVO (inquilino-propietarios-datos) QUE TENGAN USTEDES
+    WITH (
+        FIELDTERMINATOR = ';',
+        ROWTERMINATOR = '\n',
+        FIRSTROW = 2
+    );
+
+	INSERT INTO persona (nombre, apellido, dni, email_personal, telefono_contacto, cuenta, inquilino)
+	SELECT nombre, apellido, dni, email_personal, telefono_contacto, cuenta, inquilino
+	FROM #tempPersona
+END;
+go
+
+exec sp_importar_personas; --test
+select * from persona --test para ver personas
+
+--HAY QUE PARSEAR, ALGUNO TIENE ESPACIOS ' ' DE MAS Y PASAR A MAYUSCULAS O MINUSCULAS TODOS LOS NOMBRES Y MAILS
+--TUVE QUE MODIFICAR EL ARCHIVO .CSV POR QUE HABIA UN DNI DUPLICADO Y ES UNIQUE ESE CAMPO (Y DEBE SERLO)
+--HABRIA QUE AGREGAR ALGO PARA QUE SI HAY UN DNI DUPLICADO LO IGNORE PARA QUE NO SALTE ERROR
