@@ -5,7 +5,33 @@ use Com5600G02
 
 --Hay que crear schemas??
 
+------------------- TESTING ---------------------
+drop table if exists estadoFinanciero 
+go
+drop table if exists personaUf
+go
+drop table if exists gastoOrdinario
+go
+drop table if exists gastoExtraordinario
+go
+drop table if exists estadoCuentaProrrateo
+go
 drop table if exists pago
+go
+drop table if exists gasto
+go
+drop table if exists expensa
+go
+drop table if exists persona
+go
+drop table if exists unidadFuncional 
+go
+drop table if exists gastoOrdinario
+go
+drop table if exists consorcio
+go
+--------------------------------------------------
+
 create table pago (
 	id_pago int primary key,
 	fecha date,
@@ -14,7 +40,6 @@ create table pago (
 	asociado bit not null,);
 go
 
-drop table if exists consorcio
 create table consorcio (
 	id_consorcio int primary key,
 	nombre varchar(35),
@@ -23,7 +48,6 @@ create table consorcio (
 	cant_m2 int,);
 go
 
-drop table if exists persona
 create table persona (
 	id_persona int identity(1,1) primary key,
 	nombre varchar(50),
@@ -35,7 +59,6 @@ create table persona (
 	inquilino bit);
 go
 
-drop table if exists estadoFinanciero
 create table estadoFinanciero (
 	id int,
 	id_consorcio int,
@@ -50,7 +73,6 @@ create table estadoFinanciero (
 	constraint fk_estadoFinanciero_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
 go
 
-drop table if exists unidadFuncional
 create table unidadFuncional (
 	id_uf int primary key,
 	id_consorcio int,
@@ -66,7 +88,6 @@ create table unidadFuncional (
 	);
 go
 
-drop table if exists personaUf
 create table personaUf (
 	id_relacion int primary key,
 	dni_persona varchar(9) unique,
@@ -79,7 +100,6 @@ create table personaUf (
 	);
 go
 
-drop table if exists expensa
 create table expensa (
 	id_expensa int primary key,
 	id_consorcio int,
@@ -90,7 +110,6 @@ create table expensa (
 	constraint fk_expensa_id_uf foreign key (id_uf) references unidadFuncional (id_uf));
 go
 
-drop table if exists gasto
 create table gasto (
 	id_gasto int primary key,
 	id_expensa int,
@@ -101,7 +120,6 @@ create table gasto (
 	constraint fk_gasto_id_expensa foreign key (id_expensa) references expensa (id_expensa));
 go
 
-drop table if exists estadoCuentaProrrateo
 create table estadoCuentaProrrateo (
 	id_detalleDeCuenta int primary key,
 	id_expensa int,
@@ -125,7 +143,6 @@ create table estadoCuentaProrrateo (
 	foreign key (id_pago) references pago (id_pago));
 go
 
-drop table if exists gastoOrdinario
 create table gastoOrdinario (
 	id_gastoOrdinario int primary key,
 	id_gasto int,
@@ -139,7 +156,6 @@ create table gastoOrdinario (
 	);
 go
 
-drop table if exists gastoExtraordinario
 create table gastoExtraordinario (
 	id_gastoExtraordinario int primary key,
 	id_gasto int,
@@ -159,6 +175,9 @@ go
 
 --STORED PROCEDURES
 
+IF OBJECT_ID('dbo.sp_importar_personas', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.sp_importar_personas;
+GO
 CREATE PROCEDURE sp_importar_personas
 AS
 BEGIN
@@ -180,14 +199,21 @@ BEGIN
     );
 
 	INSERT INTO persona (nombre, apellido, dni, email_personal, telefono_contacto, cuenta, inquilino)
-	SELECT nombre, apellido, dni, email_personal, telefono_contacto, cuenta, inquilino
+	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(apellido))), dni, LOWER(REPLACE(LTRIM(RTRIM(email_personal)), ' ', '')), telefono_contacto, cuenta, inquilino
 	FROM #tempPersona
 END;
 go
 
+--EJECUTAR TODO JUNTO ESTO
+------------------- TESTING ---------------------
+delete from persona --test
+go
+DBCC CHECKIDENT ('persona', RESEED, 0); --Reincia el IDENTITY(1,1)
+go
 exec sp_importar_personas; --test
+go
 select * from persona --test para ver personas
+-------------------------------------------------
 
---HAY QUE PARSEAR, ALGUNO TIENE ESPACIOS ' ' DE MAS Y PASAR A MAYUSCULAS O MINUSCULAS TODOS LOS NOMBRES Y MAILS
 --TUVE QUE MODIFICAR EL ARCHIVO .CSV POR QUE HABIA UN DNI DUPLICADO Y ES UNIQUE ESE CAMPO (Y DEBE SERLO)
 --HABRIA QUE AGREGAR ALGO PARA QUE SI HAY UN DNI DUPLICADO LO IGNORE PARA QUE NO SALTE ERROR
