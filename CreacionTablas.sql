@@ -3,7 +3,6 @@
 -- ESTÁN LOS SP CON SQL DINÁMICO Y NORMAL, LOS DEJE POR LAS DUDAS(LOS NORMALES)
 -- ALGUNAS VECES CUANDO SE RESETEA EL IDENTITY DSP EMPIEZA EN 0 (Y NO EN 1, COMO DEBERIA) NO SE PQ, SI ALGUNO SABE BIEN SINO LE PREGUNTAMOS AL PROFE
 -- TODO LO QUE ESTA ACA ANDA (POR AHI HAYA QUE MODIFICAR COSAS) PERO SI NO LES "COMPILA" O TIENEN ERRORES AVISEN Y LO VEMOS, PQ LO PROBE Y ANDA TODO
--- CHEQUEAR IMPORTE DNI DUPLICADOS 
 -- MODIFICAR LOS BITS DE UF PARA QUE PERMITA SI O NO
 -- AGREGAR NOMBRE CONSORCIO EN UF PARA QUE SEA MAS FÁCIL PARA FUTURAS RELACIONES 
 create database Com5600G02
@@ -171,9 +170,7 @@ create table gastoOrdinario (
 	nro_factura int,
 	importe decimal(10,2)
 	constraint fk_gastoOrdinario_id_gasto 
-	foreign key (id_gasto) references gasto (id_gasto),
-	constraint fk_gastoOrdinario_fecha_gasto 
-	foreign key (fecha_gasto) references gasto (fecha),
+	foreign key (id_gasto) references gasto (id_gasto)
 	);
 go
 
@@ -189,9 +186,7 @@ create table gastoExtraordinario (
 	total_cuotas int,
 	importe decimal(10,2)
 	constraint fk_gastoExtraordinario_id_gasto 
-	foreign key (id_gasto) references gasto (id_gasto),
-	constraint fk_gastoExtraordinario_fecha_gasto 
-	foreign key (fecha_gasto) references gasto (fecha),
+	foreign key (id_gasto) references gasto (id_gasto)
 	);
 go
 
@@ -216,7 +211,7 @@ BEGIN
 		inquilino bit,);
 
     BULK INSERT #tempPersona
-    FROM '' -- <-- PONER LA RUTA DE ACCESO AL ARCHIVO (inquilino-propietarios-datos) QUE TENGAN USTEDES
+    FROM 'C:/temp/Inquilino-propietarios-datos.csv' -- <-- PONER LA RUTA DE ACCESO AL ARCHIVO (inquilino-propietarios-datos) QUE TENGAN USTEDES
     WITH (
         FIELDTERMINATOR = ';',
         ROWTERMINATOR = '\n',
@@ -240,10 +235,6 @@ go
 select * from persona --test para ver personas
 -------------------------------------------------*/
 
---TUVE QUE MODIFICAR EL ARCHIVO .CSV POR QUE HABIA UN DNI DUPLICADO Y ES UNIQUE ESE CAMPO (Y DEBE SERLO)
---HABRIA QUE AGREGAR ALGO PARA QUE SI HAY UN DNI DUPLICADO LO IGNORE PARA QUE NO SALTE ERROR
-
-
 --CARGAR PERSONAS CON SQL DINÁMICO PARA LA RUTA DE ACCESO
 CREATE OR ALTER PROCEDURE sp_importar_personas
     @RutaArchivoPersonas VARCHAR(255)  -- Parámetro de entrada para la ruta del archivo
@@ -252,7 +243,7 @@ BEGIN
    CREATE TABLE #tempPersona (
 		nombre varchar(50),
 		apellido varchar(50),
-		dni varchar(9) unique,
+		dni varchar(9),
 		email_personal varchar(50),
 		telefono_contacto varchar(20),
 		cuenta varchar(50),
@@ -273,12 +264,21 @@ BEGIN
 
     -- Ejecutar la importación (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
     EXEC sp_executesql @sql_dinamicoPer;
-
-    -- Insertar en la tabla final consorcio con transformaciones
-    -- Nota: Aquí se asume que la tabla 'consorcio' no admite duplicados (lo que debes validar)
+	-- Quitar duplicados dentro del CSV
+    WITH cte_sin_duplicados AS (
+        SELECT *,
+               ROW_NUMBER() OVER (PARTITION BY dni ORDER BY (SELECT NULL)) AS fila
+        FROM #tempPersona
+    )
+    DELETE FROM cte_sin_duplicados WHERE fila > 1;
+  
     INSERT INTO persona (nombre, apellido, dni, email_personal, telefono_contacto, cuenta)
-	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(apellido))), LTRIM(RTRIM(dni)), LOWER(REPLACE(LTRIM(RTRIM(email_personal)), ' ', '')), LTRIM(RTRIM(telefono_contacto)), REPLACE(LTRIM(RTRIM(cuenta)), ' ', '')
-	FROM #tempPersona
+	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(apellido))), LTRIM(RTRIM(dni)), 
+		LOWER(REPLACE(LTRIM(RTRIM(email_personal)), ' ', '')), LTRIM(RTRIM(telefono_contacto)), REPLACE(LTRIM(RTRIM(cuenta)), ' ', '')
+	FROM #tempPersona t
+   WHERE 
+        ISNULL(dni, '') <> ''  -- Evita DNIs vacíos
+        AND NOT EXISTS (SELECT 1 FROM persona p WHERE p.dni = t.dni); -- Evita duplicados
 END;
 GO
 
@@ -507,4 +507,170 @@ SELECT * FROM unidadFuncional;
 GO
 --------------------------------------------------------------
 
+-- CARGAR personaUF
+-- Este SP necesita dos archivos para cruzar la información:
+-- 1. El archivo de relación UF-CVU/CBU (Inquilino-propietarios-UF.csv)
+-- 2. El archivo de datos de Persona (Inquilino-propietarios-datos.csv)
 
+CREATE OR ALTER PROCEDURE sp_importar_persona_uf
+    @RutaArchivoRelacionUF VARCHAR(255),  -- (delimitador '|')
+    @RutaArchivoDatosPersona VARCHAR(255) -- (delimitador ';')
+AS
+BEGIN
+    -- Tabla temporal para la relación UF-CVU/CBU
+    CREATE TABLE #tempRelacionUF (
+        CVU_CBU VARCHAR(50),
+        Nombre_Consorcio VARCHAR(35),
+        nroUnidadFuncional VARCHAR(10),
+        piso VARCHAR(10),
+        departamento VARCHAR(10)
+    );
+
+    -- Tabla temporal para obtener el estado de inquilino y DNI a partir del CVU/CBU
+    CREATE TABLE #tempPersonaStatus (
+        Nombre VARCHAR(50),
+        Apellido VARCHAR(50),
+        DNI VARCHAR(9),
+        Email_Personal VARCHAR(50),
+        Telefono_Contacto VARCHAR(20),
+        Cuenta VARCHAR(50),  
+        Inquilino BIT         
+    );
+
+    DECLARE @sql_dinamico_uf NVARCHAR(MAX);
+    DECLARE @sql_dinamico_per NVARCHAR(MAX);
+
+    -- BULK INSERT para la relación UF-CVU/CBU (usando delimitador '|')
+    SET @sql_dinamico_uf =  
+        'BULK INSERT #tempRelacionUF ' +  
+        'FROM ''' + @RutaArchivoRelacionUF + ''' ' +  
+        'WITH ( ' +
+            'FIELDTERMINATOR = ''|'', ' +
+            'ROWTERMINATOR = ''\n'', ' +
+            'FIRSTROW = 2 ' +
+        ');';
+    EXEC sp_executesql @sql_dinamico_uf;
+
+    -- BULK INSERT para el estado de Inquilino
+    SET @sql_dinamico_per =  
+        'BULK INSERT #tempPersonaStatus ' +  
+        'FROM ''' + @RutaArchivoDatosPersona + ''' ' +  
+        'WITH ( ' +
+            'FIELDTERMINATOR = '';'', ' +
+            'ROWTERMINATOR = ''\n'', ' +
+            'FIRSTROW = 2 ' +
+        ');';
+    EXEC sp_executesql @sql_dinamico_per;
+
+    -- Insertar en personaUf (JOIN múltiple)
+    INSERT INTO personaUf (dni_persona, id_uf, fecha_desde, fecha_hasta, tipo_responsable)
+    SELECT
+        p.dni, 
+        uf.id_uf,
+        GETDATE() AS fecha_desde, -- Asumimos la fecha actual para la relación (esto nose si es asi)
+        NULL AS fecha_hasta,
+        -- Inferimos el tipo de responsable usando la columna 'Inquilino'
+        CASE WHEN tps.Inquilino = 1 THEN 'INQUILINO' ELSE 'PROPIETARIO' END AS tipo_responsable
+    FROM
+        #tempRelacionUF truf
+        -- Unir con el estado de inquilino para obtener el DNI y el tipo de responsable
+        INNER JOIN #tempPersonaStatus tps ON REPLACE(LTRIM(RTRIM(truf.CVU_CBU)), ' ', '') = REPLACE(LTRIM(RTRIM(tps.Cuenta)), ' ', '')
+        -- Unir con la tabla Persona para asegurar la existencia del DNI
+        INNER JOIN persona p ON p.dni = LTRIM(RTRIM(tps.DNI))
+        -- Unir con la tabla Consorcio
+        INNER JOIN consorcio c ON c.nombre = truf.Nombre_Consorcio
+        -- Unir con la tabla Unidad Funcional para obtener el id_uf
+        INNER JOIN unidadFuncional uf ON
+            uf.id_consorcio = c.id_consorcio AND
+            uf.numero_uf = CAST(truf.nroUnidadFuncional AS INT) AND
+            uf.piso = truf.piso AND
+            uf.depto = truf.departamento
+    WHERE
+        -- Evitar duplicados ya insertados (si se ejecuta el SP varias veces)
+        NOT EXISTS (
+            SELECT 1
+            FROM personaUf pu
+            WHERE pu.dni_persona = p.dni
+                AND pu.id_uf = uf.id_uf
+                AND pu.fecha_hasta IS NULL -- Solo consideramos las relaciones activas
+        );
+
+END;
+GO
+
+-----------------------Ejecución---------------------- 
+ DECLARE @archivo_relacion_uf VARCHAR(255) = ''; -- <---- RUTA
+ DECLARE @archivo_datos_persona VARCHAR(255) = ''; -- <---- RUTA
+
+DELETE FROM personaUf; 
+DBCC CHECKIDENT ('personaUf', RESEED, 0);
+EXEC sp_importar_persona_uf 
+ @RutaArchivoRelacionUF = @archivo_relacion_uf, 
+ @RutaArchivoDatosPersona = @archivo_datos_persona;
+
+SELECT * FROM personaUf;
+GO
+
+-----------------------------------------------------
+-- CARGAR PAGO
+CREATE OR ALTER PROCEDURE sp_importar_pagos
+    @RutaArchivoPagos VARCHAR(255)
+AS
+BEGIN
+   
+    CREATE TABLE #tempPago (
+        Id_de_pago VARCHAR(10),
+        fecha VARCHAR(20),
+        CVU_CBU VARCHAR(50),
+        Valor VARCHAR(30)
+    );
+
+    DECLARE @sql_dinamico_pagos NVARCHAR(MAX);
+
+    -- Construir la instrucción BULK INSERT
+    SET @sql_dinamico_pagos =  
+        'BULK INSERT #tempPago ' +  
+        'FROM ''' + @RutaArchivoPagos + ''' ' +  
+        'WITH ( ' +
+            'FIELDTERMINATOR = '','', ' + 
+            'ROWTERMINATOR = ''\n'', ' +
+            'FIRSTROW = 2 ' +
+        ');';
+
+    EXEC sp_executesql @sql_dinamico_pagos;
+    -- Transformaciones de datos:
+    --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
+    --  Convertir la fecha a formato DATE.
+   
+
+    INSERT INTO pago (fecha, cuenta_origen, importe, asociado)
+    SELECT
+        TRY_CONVERT(DATE, t.fecha, 103), -- Formato 103: dd/mm/yyyy
+        REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', ''),
+        CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2)),
+        'NO' -- Valor por defecto. Se podría actualizar a 'SI' cuando se genere la Expensa/EstadoCuentaProrrateo (creo)
+    FROM
+        #tempPago t
+    WHERE
+        ISNUMERIC(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '')) = 1  -- Solo importamos si el valor es numérico válido
+        AND TRY_CONVERT(DATE, t.fecha, 103) IS NOT NULL  -- Solo importamos si la fecha es válida
+        -- Evitar duplicados (mismo CVU/CBU, misma fecha, mismo importe)
+        AND NOT EXISTS (
+            SELECT 1
+            FROM pago p
+            WHERE
+                p.cuenta_origen = REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', '') AND
+                p.fecha = TRY_CONVERT(DATE, t.fecha, 103) AND
+                p.importe = CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2))
+        );
+
+END;
+GO
+
+-----------------------Ejecución---------------------- 
+DECLARE @archivo_pagos VARCHAR(255) = ''; -- <---- RUTA
+DELETE FROM pago; 
+DBCC CHECKIDENT ('pago', RESEED, 0);
+EXEC sp_importar_pagos @RutaArchivoPagos = @archivo_pagos;
+SELECT * FROM pago;
+GO
