@@ -37,7 +37,7 @@ go
 drop table if exists gastoOrdinario
 go
 drop table if exists consorcio
-go
+go 
 --------------------------------------------------
 -- Cambios en tablas que me parecieron correctos:  
 -- incremental en la mayoria de las tablas
@@ -97,7 +97,6 @@ cant_m2 int,
 coeficiente decimal (2,1),
 constraint fk_uf_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
 go 
-
 
 -- el unique ese esta raro debería funcionar para evitar solapamientos
 create table personaUf (
@@ -504,6 +503,60 @@ EXEC sp_importar_uf @RutaArchivoUF = @archivo_uf;
 
 -- Verificación
 SELECT * FROM unidadFuncional;
+GO
+---------------------------
+---- SP PARA CARGAR cuenta_origen EN unidadFuncional
+CREATE OR ALTER PROCEDURE sp_asociar_cuentas_uf
+    @RutaArchivoCuentas VARCHAR(255) 
+AS
+BEGIN
+    
+    CREATE TABLE #tempCuentasUF (
+        CVU_CBU VARCHAR(50),
+        NombreConsorcio VARCHAR(50),
+        nroUnidadFuncional VARCHAR(10),
+        piso VARCHAR(5),
+        departamento VARCHAR(5)
+    );
+
+    DECLARE @sql_dinamicoCuentas NVARCHAR(MAX);
+
+    SET @sql_dinamicoCuentas =
+        'BULK INSERT #tempCuentasUF ' +
+        'FROM ''' + @RutaArchivoCuentas + ''' ' +
+        'WITH ( ' +
+            'FIELDTERMINATOR = ''|'', ' + 
+            'ROWTERMINATOR = ''\n'', ' +
+            'FIRSTROW = 2, ' +
+            'CODEPAGE = ''65001'' ' +
+        ');';
+
+    EXEC sp_executesql @sql_dinamicoCuentas;
+    -- actualizar unidadFuncional con los CVU/CBU
+    -- se hace un JOIN con consorcio y la temporal para encontrar la UF correcta
+    
+    UPDATE uf
+    SET 
+        uf.cuenta_origen = t.CVU_CBU
+    FROM 
+        unidadFuncional uf
+    INNER JOIN 
+        consorcio c ON uf.id_consorcio = c.id_consorcio 
+    INNER JOIN 
+        #tempCuentasUF t ON 
+            UPPER(t.NombreConsorcio) = UPPER(c.nombre) AND 
+            CAST(t.nroUnidadFuncional AS INT) = uf.numero_uf AND -- Convertir a INT para el JOIN
+            UPPER(t.piso) = UPPER(uf.piso) AND 
+            UPPER(t.departamento) = UPPER(uf.depto)
+    WHERE
+        t.CVU_CBU IS NOT NULL;
+
+END;
+GO
+-----------------------Ejecución---------------------- 
+DECLARE @RutaArchivoC VARCHAR(255) = '';--<----RUTA DE ACCESO
+EXEC sp_asociar_cuentas_uf @RutaArchivoCuentas = @RutaArchivoC;
+SELECT * FROM unidadFuncional
 GO
 --------------------------------------------------------------
 
