@@ -36,6 +36,8 @@ drop table if exists unidadFuncional
 go
 drop table if exists gastoOrdinario
 go
+drop table if exists proveedor
+go
 drop table if exists consorcio
 go 
 --------------------------------------------------
@@ -84,18 +86,18 @@ go
 
 create table unidadFuncional (
 	id_uf int identity(1,1) primary key, --LE AGREGE EL IDENTITY(1,1) POR QUE SINO, NO PODIA IMPORTAR Y HACER CC ERA MUY COMPLEJO PARA TESTAR
-id_consorcio int, -- fk
-cuenta_origen varchar(50),
-numero_uf int,
-piso varchar(3),
-depto varchar(5),
-cochera bit,
-cochera_m2 int,
-baulera bit,
-baulera_m2 int,
-cant_m2 int,
-coeficiente decimal (2,1),
-constraint fk_uf_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
+	id_consorcio int, -- fk
+	cuenta_origen varchar(50),
+	numero_uf int,
+	piso varchar(3),
+	depto varchar(5),
+	cochera bit,
+	cochera_m2 int,
+	baulera bit,
+	baulera_m2 int,
+	cant_m2 int,
+	coeficiente decimal (2,1),
+	constraint fk_uf_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
 go 
 
 -- el unique ese esta raro debería funcionar para evitar solapamientos
@@ -124,12 +126,14 @@ go
 
 create table gasto (
 	id_gasto int identity(1,1) primary key,
+	id_consorcio int,
 	id_expensa int,
 	fecha date,
 	periodo date,
 	subtotal_ordinarios decimal(10,2),
 	subtotal_extraordinarios decimal(10,2)
-	constraint fk_gasto_id_expensa foreign key (id_expensa) references expensa (id_expensa));
+	constraint fk_gasto_id_expensa foreign key (id_expensa) references expensa (id_expensa),
+	constraint fk_gasto_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
 go
 -- lo mismo con el tipo de dato periodo
 
@@ -162,20 +166,24 @@ go
 create table gastoOrdinario (
 	id_gastoOrdinario int identity(1,1) primary key,
 	id_gasto int,
+	id_consorcio int,
 	fecha_gasto date,
 	tipo_gasto varchar(50),
 	subtipoGasto varchar(50),
 	nombre_empresa varchar(50),
 	nro_factura int,
-	importe decimal(10,2)
+	importe decimal(10,2),
 	constraint fk_gastoOrdinario_id_gasto 
-	foreign key (id_gasto) references gasto (id_gasto)
+	foreign key (id_gasto) references gasto (id_gasto),
+	constraint fk_gastoOrdinario_id_consorcio 
+	foreign key (id_consorcio) references consorcio (id_consorcio)
 	);
 go
 
 create table gastoExtraordinario (
 	id_gastoExtraordinario int identity (1,1) primary key,
 	id_gasto int,
+	id_consorcio int,
 	tipo_gasto varchar(50),
 	fecha_gasto date,
 	nombre_empresa varchar(50),
@@ -183,56 +191,28 @@ create table gastoExtraordinario (
 	descripcion varchar(50),
 	nro_cuota int,
 	total_cuotas int,
-	importe decimal(10,2)
+	importe decimal(10,2),
 	constraint fk_gastoExtraordinario_id_gasto 
-	foreign key (id_gasto) references gasto (id_gasto)
+	foreign key (id_gasto) references gasto (id_gasto),
+	constraint fk_gastoExtraordinario_id_consorcio 
+	foreign key (id_consorcio) references consorcio (id_consorcio)
 	);
 go
 
-
---STORED PROCEDURES
-
---CARGAR PERSONAS
-
-/*IF OBJECT_ID('dbo.sp_importar_personas', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.sp_importar_personas;
-GO
-CREATE or ALTER PROCEDURE sp_importar_personas
-AS
-BEGIN
-	CREATE TABLE #tempPersona (
-		nombre varchar(50),
-		apellido varchar(50),
-		dni varchar(9) unique,
-		email_personal varchar(50),
-		telefono_contacto varchar(20),
-		cuenta varchar(50),
-		inquilino bit,);
-
-    BULK INSERT #tempPersona
-    FROM 'C:/temp/Inquilino-propietarios-datos.csv' -- <-- PONER LA RUTA DE ACCESO AL ARCHIVO (inquilino-propietarios-datos) QUE TENGAN USTEDES
-    WITH (
-        FIELDTERMINATOR = ';',
-        ROWTERMINATOR = '\n',
-        FIRSTROW = 2
-    );
-
-	INSERT INTO persona (nombre, apellido, dni, email_personal, telefono_contacto, cuenta)
-	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(apellido))), LTRIM(RTRIM(dni)), LOWER(REPLACE(LTRIM(RTRIM(email_personal)), ' ', '')), LTRIM(RTRIM(telefono_contacto)), REPLACE(LTRIM(RTRIM(cuenta)), ' ', '')
-	FROM #tempPersona
-END;
+create table proveedor (  --Cambiar a "proveedor"
+	id_proveedor int identity(1,1) primary key,
+	id_consorcio int,
+	tipo_gasto varchar(50),
+	nombre_empresa varchar(100),
+	alias varchar(50),
+	constraint fk_proveedor_id_consorcio 
+	foreign key (id_consorcio) references consorcio (id_consorcio)
+	);
 go
 
---EJECUTAR TODO JUNTO ESTO
-------------------- TESTING ---------------------
-delete from persona --test
-go
-DBCC CHECKIDENT ('persona', RESEED, 0); --Reincia el IDENTITY(1,1)
-go
-exec sp_importar_personas; --test
-go
-select * from persona --test para ver personas
--------------------------------------------------*/
+--------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------  STORED PROCEDURES  ---------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 --CARGAR PERSONAS CON SQL DINÁMICO PARA LA RUTA DE ACCESO
 CREATE OR ALTER PROCEDURE sp_importar_personas
@@ -281,7 +261,7 @@ BEGIN
 END;
 GO
 
-
+-------------------------------------------------------------------------
 -- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
 DECLARE @archivo_personas VARCHAR(255) = ''; --<----RUTA DE ACCESO
 
@@ -293,50 +273,9 @@ DBCC CHECKIDENT ('persona', RESEED, 0);
 EXEC sp_importar_personas @RutaArchivoPersonas = @archivo_personas;
 
 -- Verificación
-SELECT * FROM persona;
+SELECT * FROM persona; 
 GO
----------------------------------
-
----------------------------------------------------------------------------------------------------------------------------------------------------
-
---CARGAR CONSORCIOS
-/*IF OBJECT_ID('dbo.sp_importar_consorcios', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.sp_importar_consorcios;
-GO
-CREATE or ALTER PROCEDURE sp_importar_consorcios
-AS
-BEGIN
-	CREATE TABLE #tempConsorcio (
-		num_consorcio varchar(12),
-		nombre varchar(35),
-		direccion varchar(35),
-		cant_uf int,
-		cant_m2 int,);
-
-    BULK INSERT #tempConsorcio
-    FROM '' -- <-- PONER LA RUTA DE ACCESO AL ARCHIVO (datos varios 1(Consorcios).csv) QUE TENGAN USTEDES (ES EL ARCHIVO EXCEL, TIENE DOS VENTANAS DENTRO, EXPORTAR COMO CSV)
-    WITH (
-        FIELDTERMINATOR = ';',
-        ROWTERMINATOR = '\n',
-        FIRSTROW = 2
-    );
-
-	INSERT INTO consorcio (nombre, direccion, cant_uf, cant_m2)
-	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(direccion))), cant_uf, cant_m2
-	FROM #tempConsorcio
-END;
-go
-
---EJECUTAR TODO JUNTO ESTO
-------------------- TESTING ---------------------
-delete from consorcio --test
-go
-DBCC CHECKIDENT ('consorcio', RESEED, 0); --Reincia el IDENTITY(1,1)
-go
-exec sp_importar_consorcios; --test
-go
-select * from consorcio --test para ver consorcios
--------------------------------------------------*/
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 --CARGAR CONSORCIOS CON SQL DINÁMICO PARA LA RUTA DE ACCESO
 CREATE OR ALTER PROCEDURE sp_importar_consorcios
@@ -375,7 +314,7 @@ BEGIN
 END
 GO
 
-
+-------------------------------------------------------------------------
 -- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
 DECLARE @archivo_consorcios VARCHAR(255) = ''; --<----RUTA DE ACCESO
 
@@ -389,61 +328,7 @@ EXEC sp_importar_consorcios @RutaArchivo = @archivo_consorcios;
 -- Verificación
 SELECT * FROM consorcio;
 GO
----------------------------------
-
-
-
---CARGAR UNIDADES FUNCIONALES
---Modifique el decimal en coeficiente
-/*IF OBJECT_ID('dbo.sp_importar_uf', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.sp_importar_uf;
-GO
-CREATE or ALTER PROCEDURE sp_importar_uf
-AS
-BEGIN
-	-- MISMO ORDEN QUE EN EL ARCHIVO "UF por consorcio.txt"
-	CREATE TABLE #tempUf ( 
-		nombre_consorcio varchar(35),
-    numero_uf varchar(10),
-    piso varchar(10),
-    depto varchar(10),
-    coeficiente varchar(10),
-    uf_m2 varchar(10),
-    baulera varchar(10),
-    cochera varchar(10),
-    baulera_m2 varchar(10),
-    cochera_m2 varchar(10));
-
-    BULK INSERT #tempUf
-    FROM '' -- <-- PONER LA RUTA DE ACCESO AL ARCHIVO (UF por consorcio.txt) QUE TENGAN USTEDES
-    WITH (
-        FIELDTERMINATOR = '\t',
-        ROWTERMINATOR = '\n',
-        FIRSTROW = 2,
-		CODEPAGE = '65001' 
-    );
-
-	INSERT INTO unidadFuncional (id_consorcio, numero_uf, piso, depto, cochera, cochera_m2, baulera, baulera_m2, cant_m2, coeficiente)
-SELECT    UPPER(c.id_consorcio), CAST(u.numero_uf AS INT), CAST(u.piso AS varchar(3)), CAST(u.depto as varchar(5)), 
-        CASE WHEN u.cochera = 'SI' THEN 1 ELSE 0 END, CAST(u.cochera_m2 AS INT), CASE WHEN u.baulera = 'SI' THEN 1 ELSE 0 END, 
-        CAST(u.baulera_m2 as INT), CAST(u.uf_m2 AS INT), CAST(REPLACE(u.coeficiente, ',', '.') AS decimal (2,1))
-FROM #tempUf u
-JOIN consorcio c ON c.nombre = u.nombre_consorcio;
-END;
-go
-
---EJECUTAR TODO JUNTO ESTO
-------------------- TESTING ---------------------
-delete from unidadFuncional --test
-go
-DBCC CHECKIDENT ('unidadFuncional', RESEED, 0); --Reincia el IDENTITY(1,1)
-go
-exec sp_importar_uf; --test
-go
-select * from unidadFuncional --test para ver consorcios
--------------------------------------------------*/
--- TUVE QUE BORRAR LOS ULTIMOS RENGLONES VACIOS DEL ARCHIVO DE TXT PQ SINO NO FUNCIONABA (seguramente tengan que hacer lo mismo)
-
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 --CARGAR UF CON SQL DINÁMICO PARA LA RUTA DE ACCESO
 CREATE or ALTER PROCEDURE sp_importar_uf
@@ -452,15 +337,15 @@ AS
 BEGIN
     CREATE TABLE #tempUf ( 
 		nombre_consorcio varchar(35),
-    numero_uf varchar(10),
-    piso varchar(10),
-    depto varchar(10),
-    coeficiente varchar(10),
-    uf_m2 varchar(10),
-    baulera varchar(10),
-    cochera varchar(10),
-    baulera_m2 varchar(10),
-    cochera_m2 varchar(10));
+		numero_uf varchar(10),
+		piso varchar(10),
+		depto varchar(10),
+		coeficiente varchar(10),
+		uf_m2 varchar(10),
+		baulera varchar(10),
+		cochera varchar(10),
+		baulera_m2 varchar(10),
+		cochera_m2 varchar(10));
 
     -- Declarar una variable para el SQL dinámico
     DECLARE @sql_dinamicoUF NVARCHAR(MAX);
@@ -490,8 +375,8 @@ BEGIN
 END;
 GO
 
-
------------------------Ejecución---------------------- 
+-------------------------------------------------------------------------
+-- Ejemplo de ejecución (debe estar en el script de testing/invocaciones) 
 DECLARE @archivo_uf VARCHAR(255) = '';--<----RUTA DE ACCESO
 
 -- Restablece el IDENTITY para la prueba
@@ -504,8 +389,9 @@ EXEC sp_importar_uf @RutaArchivoUF = @archivo_uf;
 -- Verificación
 SELECT * FROM unidadFuncional;
 GO
----------------------------
----- SP PARA CARGAR cuenta_origen EN unidadFuncional
+-------------------------------------------------------------------------
+
+-- SP PARA CARGAR cuenta_origen EN unidadFuncional
 CREATE OR ALTER PROCEDURE sp_asociar_cuentas_uf
     @RutaArchivoCuentas VARCHAR(255) 
 AS
@@ -553,11 +439,11 @@ BEGIN
 
 END;
 GO
------------------------Ejecución---------------------- 
+-------------------------------------------------------------------------
+-- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
 DECLARE @RutaArchivoC VARCHAR(255) = '';--<----RUTA DE ACCESO
 EXEC sp_asociar_cuentas_uf @RutaArchivoCuentas = @RutaArchivoC;
 SELECT * FROM unidadFuncional
-GO
 --------------------------------------------------------------
 
 -- CARGAR personaUF
@@ -652,8 +538,8 @@ END;
 GO
 
 -----------------------Ejecución---------------------- 
- DECLARE @archivo_relacion_uf VARCHAR(255) = ''; -- <---- RUTA
- DECLARE @archivo_datos_persona VARCHAR(255) = ''; -- <---- RUTA
+DECLARE @archivo_relacion_uf VARCHAR(255) = ''; -- <---- RUTA
+DECLARE @archivo_datos_persona VARCHAR(255) = ''; -- <---- RUTA
 
 DELETE FROM personaUf; 
 DBCC CHECKIDENT ('personaUf', RESEED, 0);
@@ -727,3 +613,160 @@ DBCC CHECKIDENT ('pago', RESEED, 0);
 EXEC sp_importar_pagos @RutaArchivoPagos = @archivo_pagos;
 SELECT * FROM pago;
 GO
+---------------------------------------------------
+-- IMPORTAR PROVEEDORES
+CREATE OR ALTER PROCEDURE sp_importar_proveedores
+    @RutaArchivoProveedores VARCHAR(255)
+AS
+BEGIN
+   
+    CREATE TABLE #tempProveedor (
+		tipo_gasto varchar(50),
+		nombre_empresa varchar(100),
+		alias varchar(50),
+		nombre_consorcio varchar(50)
+    );
+
+    DECLARE @sql_dinamico_proveedores NVARCHAR(MAX);
+
+    -- Construir la instrucción BULK INSERT
+    SET @sql_dinamico_proveedores =  
+        'BULK INSERT #tempProveedor ' +  
+        'FROM ''' + @RutaArchivoProveedores + ''' ' +  
+        'WITH ( ' +
+            'FIELDTERMINATOR = '';'', ' +
+            'ROWTERMINATOR = ''\n'', ' +
+            'FIRSTROW = 2 ' +
+        ');';
+
+    EXEC sp_executesql @sql_dinamico_proveedores;
+    -- Transformaciones de datos:
+    --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
+    --  Convertir la fecha a formato DATE.
+   
+
+    INSERT INTO proveedor (id_consorcio, tipo_gasto, nombre_empresa, alias)
+    SELECT 
+		c.id_consorcio, p.tipo_gasto, p.nombre_empresa, p.alias
+    FROM
+		consorcio c INNER JOIN #tempProveedor p ON c.nombre = p.nombre_consorcio
+END;
+GO
+--------------EJECUCION-------------------
+DECLARE @archivo_provedores VARCHAR(255) = ''; -- <---- RUTA
+DELETE FROM proveedor; 
+DBCC CHECKIDENT ('proveedor', RESEED, 0);
+EXEC sp_importar_proveedores @RutaArchivoProveedores = @archivo_provedores;
+SELECT * FROM proveedor;
+GO
+-------------------------------------------------------------
+--IMPORTAR GASTOS DE SERVICIOS
+
+--HAY QUE METER ESTO EN UN SP DE SQL DINAMICO
+
+--PARA EJECUTAR, ES DESDE ACA ->>>
+drop table #gastoOrdinarioTemp
+CREATE TABLE #gastoOrdinarioTemp (
+    nombre NVARCHAR(100),
+    mes NVARCHAR(20),
+    bancarios NVARCHAR(20),
+    limpieza NVARCHAR(20),
+    administracion NVARCHAR(20),
+    seguros NVARCHAR(20),
+    gastosGenerales NVARCHAR(20),
+    agua NVARCHAR(20),
+    luz NVARCHAR(20)
+);
+
+DECLARE @path NVARCHAR(MAX)
+SET @path = '' --<<< Ruta al .json
+DECLARE @SQL NVARCHAR(MAX)
+SET @SQL = N'
+INSERT INTO #gastoOrdinarioTemp (nombre, mes, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
+
+SELECT nombre, mes, bancarios, limpieza, administracion, seguros, generales, agua, luz
+
+FROM OPENROWSET (BULK ''' + @path + N''', SINGLE_CLOB) AS j
+   CROSS APPLY OPENJSON(BulkColumn) WITH (
+    nombre NVARCHAR(50)  ''$."Nombre del consorcio"'',
+    mes NVARCHAR(50) ''$.Mes'',
+    bancarios NVARCHAR(50) ''$.BANCARIOS'',
+    limpieza NVARCHAR(50)  ''$.LIMPIEZA'',
+    administracion NVARCHAR(50)  ''$.ADMINISTRACION'',
+    seguros NVARCHAR(50) ''$.SEGUROS'',
+    generales NVARCHAR(50) ''$."GASTOS GENERALES"'',
+    agua NVARCHAR(50)  ''$."SERVICIOS PUBLICOS-Agua"'',
+    luz NVARCHAR(50)  ''$."SERVICIOS PUBLICOS-Luz"'' 
+ );';
+EXEC sp_executesql @SQL;
+select * from #gastoOrdinarioTemp
+GO 
+--<<<< PARA EJECUTAR, HASTA ACA
+delete from #gastoOrdinarioTemp --TESTING
+
+--falta hacer un INSERT INTO proveedor, lo que hay en la temp. Pero no lo hicimos pq estabamos viendo como manejar las tablas
+--Abajo hay mas info de los pasos que siguen en teoria :-)
+
+
+
+--ESTO ERA UNA PRUBA NOMAS, PERO POR AHI SIRVE DSP (?
+/* 
+
+INSERT INTO testGastosOrdinarios (id_consorcio, fecha_gasto, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
+SELECT
+    c.id_consorcio,
+    o.mes,
+    TRY_CAST(REPLACE(REPLACE(o.bancarios, '.', ''), ',', '.') AS DECIMAL(10,2)),
+    TRY_CAST(REPLACE(REPLACE(o.limpieza, '.', ''), ',', '.') AS DECIMAL(10,2)),
+    TRY_CAST(REPLACE(REPLACE(o.administracion, '.', ''), ',', '.') AS DECIMAL(10,2)),
+    TRY_CAST(REPLACE(REPLACE(o.seguros, '.', ''), ',', '.') AS DECIMAL(10,2)),
+    TRY_CAST(REPLACE(REPLACE(o.gastosGenerales, '.', ''), ',', '.') AS DECIMAL(10,2)),
+    TRY_CAST(REPLACE(REPLACE(o.agua, '.', ''), ',', '.') AS DECIMAL(10,2)),
+    TRY_CAST(REPLACE(REPLACE(o.luz, '.', ''), ',', '.') AS DECIMAL(10,2))
+FROM consorcio c
+INNER JOIN #gastoOrdinarioTemp o ON c.nombre = o.nombre;
+
+delete from testGastosOrdinarios
+go
+DBCC CHECKIDENT ('testGastosOrdinarios', RESEED, 0);
+go
+select * from testGastosOrdinarios
+
+
+drop table testGastosOrdinarios
+create table testGastosOrdinarios (
+	id_gastoOrdinario int identity(1,1) primary key,
+	id_consorcio int,
+	fecha_gasto varchar(50),
+	bancarios decimal(10,2),
+    limpieza decimal(10,2),
+    administracion decimal(10,2),
+    seguros decimal(10,2),
+    gastosGenerales decimal(10,2),
+    agua decimal(10,2),
+    luz decimal(10,2),
+	constraint fk_testGastoOrdinario_id_consorcio 
+	foreign key (id_consorcio) references consorcio (id_consorcio)
+);
+*/
+
+
+--SIGUIENTES PASOS ->
+
+-- CARGAR ESTA TABLA
+create table expensa (
+	id_expensa int identity(1,1) primary key,
+	id_consorcio int,
+	id_persona int,
+	id_uf int,
+	constraint fk_expensa_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio),
+	constraint fk_expensa_id_persona foreign key (id_persona) references persona (id_persona),
+	constraint fk_expensa_id_uf foreign key (id_uf) references unidadFuncional (id_uf));
+go
+
+select * from persona --HAY QUE SACAR CUENTA_ORIGEN / ID O DNI DE ACA
+select * from personaUf --RELACIONARLO ACA PARA SABER SI ES INQUILINO O PROPIETARIO
+select * from unidadFuncional --RELACIONARLO ACA SEGUN CUENTA ORIGEN PARA SABER EN QUE CONSORCIO ESTÁ Y EN Q UF DE ESE CONSORCIO 
+select * from consorcio --Y DE ACA DEL CONSORCIO (?
+--DSP CARGAR TABLA gasto
+--CUANDO HICE EL PUSH TODO FUNCIONABA, AVISO POR LAS DUDAS
