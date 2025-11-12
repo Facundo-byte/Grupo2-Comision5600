@@ -117,23 +117,19 @@ go
 create table expensa (
 	id_expensa int identity(1,1) primary key,
 	id_consorcio int,
-	id_persona int,
-	id_uf int,
+	periodo varchar (10) not null,
 	constraint fk_expensa_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio),
-	constraint fk_expensa_id_persona foreign key (id_persona) references persona (id_persona),
-	constraint fk_expensa_id_uf foreign key (id_uf) references unidadFuncional (id_uf));
+    );
 go
 
 create table gasto (
 	id_gasto int identity(1,1) primary key,
-	id_consorcio int,
 	id_expensa int,
-	fecha date,
-	periodo date,
+	periodo varchar (10),
 	subtotal_ordinarios decimal(10,2),
 	subtotal_extraordinarios decimal(10,2)
 	constraint fk_gasto_id_expensa foreign key (id_expensa) references expensa (id_expensa),
-	constraint fk_gasto_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
+    );
 go
 -- lo mismo con el tipo de dato periodo
 
@@ -166,17 +162,13 @@ go
 create table gastoOrdinario (
 	id_gastoOrdinario int identity(1,1) primary key,
 	id_gasto int,
-	id_consorcio int,
-	fecha_gasto date,
 	tipo_gasto varchar(50),
 	subtipoGasto varchar(50),
-	nombre_empresa varchar(50),
+	nombre_empresa varchar(200),
 	nro_factura int,
-	importe decimal(10,2),
+	importe decimal(18,2),
 	constraint fk_gastoOrdinario_id_gasto 
 	foreign key (id_gasto) references gasto (id_gasto),
-	constraint fk_gastoOrdinario_id_consorcio 
-	foreign key (id_consorcio) references consorcio (id_consorcio)
 	);
 go
 
@@ -209,6 +201,7 @@ create table proveedor (  --Cambiar a "proveedor"
 	foreign key (id_consorcio) references consorcio (id_consorcio)
 	);
 go
+
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------  STORED PROCEDURES  ---------------------------------------------------------------
@@ -660,113 +653,322 @@ EXEC sp_importar_proveedores @RutaArchivoProveedores = @archivo_provedores;
 SELECT * FROM proveedor;
 GO
 -------------------------------------------------------------
---IMPORTAR GASTOS DE SERVICIOS
+----------------------------------------------------------------------IMPORTAR EXPENSAS-------------------------------------------------------
+CREATE OR ALTER PROCEDURE spGenerarExpensas
+    @periodo_mes VARCHAR(12), -- Nombre del mes (ej. 'Abril')
+    @anio INT                 -- Año (ej. 2025)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    DECLARE @periodo_completo VARCHAR(10); -- Almacenará el formato YYYY-MM
+    
+    -- ==========================================================
+    -- 1. VALIDACIONES INICIALES y CONSTRUCCIÓN DEL PERÍODO
+    -- ==========================================================
+    
+    -- Validamos y convertimos el periodo a formato YYYY-MM para el campo 'periodo'
+    -- (Esta lógica asegura que solo se procesen meses válidos)
+    WITH Meses AS (
+        SELECT 'enero' AS nombre, '01' AS num UNION ALL SELECT 'febrero', '02' UNION ALL 
+        SELECT 'marzo', '03' UNION ALL SELECT 'abril', '04' UNION ALL 
+        SELECT 'mayo', '05' UNION ALL SELECT 'junio', '06' UNION ALL
+        SELECT 'julio', '07' UNION ALL SELECT 'agosto', '08' UNION ALL 
+        SELECT 'septiembre', '09' UNION ALL SELECT 'octubre', '10' UNION ALL 
+        SELECT 'noviembre', '11' UNION ALL SELECT 'diciembre', '12'
+    )
+    SELECT @periodo_completo = CONCAT(@anio, '-', num)
+    FROM Meses
+    WHERE nombre = LOWER(@periodo_mes);
+    
+    -- Verificamos si la conversión falló (indicando un mes inválido)
+    IF @periodo_completo IS NULL
+    BEGIN
+        RAISERROR('Error: El nombre de mes ingresado no es válido.', 16, 1);
+        RETURN -1; 
+    END
 
---HAY QUE METER ESTO EN UN SP DE SQL DINAMICO
+    -- ==========================================================
+    -- 2. GENERACIÓN E INSERCIÓN DE EXPENSAS POR CONSORCIO
+    -- ==========================================================
+    
+    BEGIN TRY
+        
+        -- Insertar un registro de expensa para cada Consorcio activo.
+        INSERT INTO expensa (
+            id_consorcio,
+            periodo
+        )
+        SELECT
+            c.id_consorcio,
+            @periodo_completo
+        FROM
+            consorcio c -- Fuente de todos los Consorcios
+        WHERE NOT EXISTS (
+                SELECT 1 
+                FROM expensa e
+                WHERE e.id_consorcio = c.id_consorcio
+                  AND e.periodo = @periodo_completo
+            );
 
---PARA EJECUTAR, ES DESDE ACA ->>>
-drop table #gastoOrdinarioTemp
-CREATE TABLE #gastoOrdinarioTemp (
-    nombre NVARCHAR(100),
-    mes NVARCHAR(20),
-    bancarios NVARCHAR(20),
-    limpieza NVARCHAR(20),
-    administracion NVARCHAR(20),
-    seguros NVARCHAR(20),
-    gastosGenerales NVARCHAR(20),
-    agua NVARCHAR(20),
-    luz NVARCHAR(20)
-);
+        -- Mensaje de éxito o advertencia
+        IF @@ROWCOUNT = 0
+        BEGIN
+            PRINT 'Advertencia: No se insertaron nuevas expensas. Ya existían para el periodo, o no hay consorcios activos.';
+        END
+        ELSE
+        BEGIN
+            PRINT 'Se crearon ' + CAST(@@ROWCOUNT AS VARCHAR) + ' registros de encabezado de expensa para el periodo ' + @periodo_completo;
+        END
+        
+        RETURN 0;
 
-DECLARE @path NVARCHAR(MAX)
-SET @path = '' --<<< Ruta al .json
-DECLARE @SQL NVARCHAR(MAX)
-SET @SQL = N'
-INSERT INTO #gastoOrdinarioTemp (nombre, mes, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
+    END TRY
+    BEGIN CATCH
+        -- Manejo de errores de bajo nivel
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR('Error inesperado al generar las expensas: %s', 16, 1, @ErrorMessage);
+        RETURN -4;
+    END CATCH
 
-SELECT nombre, mes, bancarios, limpieza, administracion, seguros, generales, agua, luz
+    SET NOCOUNT OFF;
+END;
+GO
 
-FROM OPENROWSET (BULK ''' + @path + N''', SINGLE_CLOB) AS j
-   CROSS APPLY OPENJSON(BulkColumn) WITH (
-    nombre NVARCHAR(50)  ''$."Nombre del consorcio"'',
-    mes NVARCHAR(50) ''$.Mes'',
-    bancarios NVARCHAR(50) ''$.BANCARIOS'',
-    limpieza NVARCHAR(50)  ''$.LIMPIEZA'',
-    administracion NVARCHAR(50)  ''$.ADMINISTRACION'',
-    seguros NVARCHAR(50) ''$.SEGUROS'',
-    generales NVARCHAR(50) ''$."GASTOS GENERALES"'',
-    agua NVARCHAR(50)  ''$."SERVICIOS PUBLICOS-Agua"'',
-    luz NVARCHAR(50)  ''$."SERVICIOS PUBLICOS-Luz"'' 
- );';
-EXEC sp_executesql @SQL;
-select * from #gastoOrdinarioTemp
-GO 
---<<<< PARA EJECUTAR, HASTA ACA
-delete from #gastoOrdinarioTemp --TESTING
+-- 1. Declarar variables para los parámetros
+DECLARE @periodo_mes_test VARCHAR(12) = 'Junio'; -- El mes que quieres generar
+DECLARE @anio_test INT = 2025;             -- El año
 
---falta hacer un INSERT INTO proveedor, lo que hay en la temp. Pero no lo hicimos pq estabamos viendo como manejar las tablas
---Abajo hay mas info de los pasos que siguen en teoria :-)
+-- 2. Ejecutar el Stored Procedure
+EXEC spGenerarExpensas    
+    @periodo_mes = @periodo_mes_test,
+    @anio = @anio_test;
 
+-- 3. Verificación de Resultados
+SELECT 
+    e.id_expensa,
+    e.periodo,
+    c.nombre AS Nombre_Consorcio
+FROM 
+    expensa e
+INNER JOIN 
+    consorcio c ON e.id_consorcio = c.id_consorcio
+WHERE 
+    e.periodo = CONCAT(@anio_test, 
+        CASE LOWER(@periodo_mes_test)
+            WHEN 'enero' THEN '-01' WHEN 'febrero' THEN '-02' WHEN 'marzo' THEN '-03' 
+            WHEN 'abril' THEN '-04' WHEN 'mayo' THEN '-05' WHEN 'junio' THEN '-06' 
+            WHEN 'julio' THEN '-07' WHEN 'agosto' THEN '-08' WHEN 'septiembre' THEN '-09' 
+            WHEN 'octubre' THEN '-10' WHEN 'noviembre' THEN '-11' WHEN 'diciembre' THEN '-12'
+        END)
+ORDER BY c.nombre;
+GO
 
+DELETE FROM expensa; 
+DBCC CHECKIDENT ('expensa', RESEED, 0);
 
---ESTO ERA UNA PRUBA NOMAS, PERO POR AHI SIRVE DSP (?
-/* 
+-----------------------INSERTAR GASTOS------------------------------
+CREATE OR ALTER PROCEDURE spGenerarGastos
+AS
+BEGIN
+    SET NOCOUNT ON;
 
-INSERT INTO testGastosOrdinarios (id_consorcio, fecha_gasto, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
-SELECT
-    c.id_consorcio,
-    o.mes,
-    TRY_CAST(REPLACE(REPLACE(o.bancarios, '.', ''), ',', '.') AS DECIMAL(10,2)),
-    TRY_CAST(REPLACE(REPLACE(o.limpieza, '.', ''), ',', '.') AS DECIMAL(10,2)),
-    TRY_CAST(REPLACE(REPLACE(o.administracion, '.', ''), ',', '.') AS DECIMAL(10,2)),
-    TRY_CAST(REPLACE(REPLACE(o.seguros, '.', ''), ',', '.') AS DECIMAL(10,2)),
-    TRY_CAST(REPLACE(REPLACE(o.gastosGenerales, '.', ''), ',', '.') AS DECIMAL(10,2)),
-    TRY_CAST(REPLACE(REPLACE(o.agua, '.', ''), ',', '.') AS DECIMAL(10,2)),
-    TRY_CAST(REPLACE(REPLACE(o.luz, '.', ''), ',', '.') AS DECIMAL(10,2))
-FROM consorcio c
-INNER JOIN #gastoOrdinarioTemp o ON c.nombre = o.nombre;
+    -- 1. Insertar un registro de Gasto por cada Expensa que aún no tenga uno.
+    INSERT INTO gasto (
+        id_expensa, 
+        periodo, 
+        subtotal_ordinarios, 
+        subtotal_extraordinarios
+    )
+    SELECT
+        e.id_expensa,
+        e.periodo, -- Heredamos el periodo directamente de la Expensa
+        NULL,      -- Valor NULL según el requerimiento
+        NULL       -- Valor NULL según el requerimiento
+    FROM 
+        expensa e
+    WHERE
+        -- Cláusula NOT EXISTS para asegurar la unicidad (no crear duplicados)
+        NOT EXISTS (
+            SELECT 1 
+            FROM Gasto g
+            WHERE g.id_expensa = e.id_expensa
+        );
 
-delete from testGastosOrdinarios
-go
-DBCC CHECKIDENT ('testGastosOrdinarios', RESEED, 0);
-go
-select * from testGastosOrdinarios
+    -- Mensaje de éxito o advertencia
+    IF @@ROWCOUNT = 0
+    BEGIN
+        PRINT 'Advertencia: No se insertaron nuevos registros de Gasto. Todas las expensas ya tienen un registro asociado.';
+    END
+    ELSE
+    BEGIN
+        PRINT 'Se crearon ' + CAST(@@ROWCOUNT AS VARCHAR) + ' nuevos registros en la tabla Gasto.';
+    END
+    
+    RETURN 0;
 
+END;
+GO
 
-drop table testGastosOrdinarios
-create table testGastosOrdinarios (
-	id_gastoOrdinario int identity(1,1) primary key,
-	id_consorcio int,
-	fecha_gasto varchar(50),
-	bancarios decimal(10,2),
-    limpieza decimal(10,2),
-    administracion decimal(10,2),
-    seguros decimal(10,2),
-    gastosGenerales decimal(10,2),
-    agua decimal(10,2),
-    luz decimal(10,2),
-	constraint fk_testGastoOrdinario_id_consorcio 
-	foreign key (id_consorcio) references consorcio (id_consorcio)
-);
-*/
+-- Ejecutar el Stored Procedure para inicializar la tabla Gasto
+EXEC spGenerarGastos;
+GO
 
+select * from gasto
 
---SIGUIENTES PASOS ->
+-- Verificación de Resultados
+-- Muestra el número de registros en Gasto que tienen subtotales en NULL
+SELECT 
+    COUNT(*) AS Total_Registros_Gasto_Creados
+FROM 
+    gasto g
+WHERE 
+    g.subtotal_ordinarios IS NULL 
+    AND g.subtotal_extraordinarios IS NULL;
 
--- CARGAR ESTA TABLA
-create table expensa (
-	id_expensa int identity(1,1) primary key,
-	id_consorcio int,
-	id_persona int,
-	id_uf int,
-	constraint fk_expensa_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio),
-	constraint fk_expensa_id_persona foreign key (id_persona) references persona (id_persona),
-	constraint fk_expensa_id_uf foreign key (id_uf) references unidadFuncional (id_uf));
-go
+-- Muestra algunos de los nuevos registros para inspección
+SELECT TOP 10 *
+FROM gasto
+ORDER BY id_gasto DESC;
+GO
 
-select * from persona --HAY QUE SACAR CUENTA_ORIGEN / ID O DNI DE ACA
-select * from personaUf --RELACIONARLO ACA PARA SABER SI ES INQUILINO O PROPIETARIO
-select * from unidadFuncional --RELACIONARLO ACA SEGUN CUENTA ORIGEN PARA SABER EN QUE CONSORCIO ESTÁ Y EN Q UF DE ESE CONSORCIO 
-select * from consorcio --Y DE ACA DEL CONSORCIO (?
---DSP CARGAR TABLA gasto
---CUANDO HICE EL PUSH TODO FUNCIONABA, AVISO POR LAS DUDAS
+DELETE FROM gasto; 
+DBCC CHECKIDENT ('gasto', RESEED, 0);
+select * from gasto
+
+-----------INSERTAR GASTOS ORDINARIOS--------------------------------
+-------------------Versón juan act----------------------
+CREATE OR ALTER PROCEDURE spImportarGastosOrdinarios
+    @RutaArchivoJson VARCHAR(255) -- Parámetro para la ruta del archivo JSON
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Variables para SQL Dinámico y el contenido del JSON
+    DECLARE @sql_dinamico NVARCHAR(MAX);
+    DECLARE @JsonData NVARCHAR(MAX); 
+
+    -- [SECCIÓN 1: EXTRACT (Lectura del Archivo)]
+    SET @sql_dinamico = 
+        'SELECT @JsonData = BulkColumn FROM OPENROWSET(BULK ''' + @RutaArchivoJson + ''', SINGLE_CLOB) AS J;';
+    
+    EXEC sp_executesql 
+        @stmt = @sql_dinamico, 
+        @param = N'@JsonData NVARCHAR(MAX) OUTPUT', 
+        @JsonData = @JsonData OUTPUT;
+
+    IF @JsonData IS NULL OR @JsonData = ''
+    BEGIN
+        RAISERROR('Error: No se pudo leer el archivo JSON o está vacío.', 16, 1);
+        RETURN -1;
+    END
+
+    -- [SECCIÓN 2: TRANSFORM & LOAD]
+    
+    BEGIN TRY
+        
+        WITH JsonGastosAplanados AS (
+            SELECT
+                JSON_VALUE(j.value, '$."Nombre del consorcio"') AS NombreConsorcio,
+                TRIM(JSON_VALUE(j.value, '$.Mes')) AS Mes,
+                GastoData.[key] AS TipoGastoJson,
+                
+                -- ***************************************************************
+                -- SOLUCIÓN FINAL A TRUNCAMIENTO Y FORMATO REGIONAL (TRY_PARSE)
+                -- ***************************************************************
+                TRY_PARSE(
+                    TRIM(GastoData.value) -- Limpiamos solo espacios externos
+                    AS DECIMAL(18, 2) USING 'es-ES' -- Usa el formato Español (punto=miles, coma=decimal)
+                ) AS Importe_Decimal
+                
+            FROM 
+                OPENJSON(@JsonData) j 
+            CROSS APPLY 
+                OPENJSON(j.value) AS GastoData
+            WHERE
+                GastoData.[key] NOT IN ('_id', 'Nombre del consorcio', 'Mes')
+                AND JSON_VALUE(j.value, '$."Nombre del consorcio"') IS NOT NULL
+        ),
+        
+        -- Mapear el Mes a su formato YYYY-MM
+        Meses AS (
+            SELECT 'abril' AS nombre, '04' AS num UNION ALL SELECT 'mayo', '05' UNION ALL 
+            SELECT 'junio', '06' AS num
+        )
+        
+        INSERT INTO gastoOrdinario(
+            id_gasto, 
+            tipo_gasto, 
+            nombre_empresa,
+            importe
+        )
+        SELECT
+            g.id_gasto,
+            UPPER(j.TipoGastoJson), 
+            p.nombre_empresa,
+            j.Importe_Decimal
+        FROM 
+            JsonGastosAplanados j
+        INNER JOIN 
+            consorcio c ON UPPER(c.nombre) = UPPER(j.NombreConsorcio COLLATE Modern_Spanish_CI_AS)
+        INNER JOIN 
+            Meses m ON LOWER(m.nombre) = LOWER(j.Mes COLLATE Modern_Spanish_CI_AS)
+        INNER JOIN 
+            expensa e ON e.id_consorcio = c.id_consorcio 
+                         AND e.periodo = CONCAT('2025-', m.num)
+        INNER JOIN 
+            Gasto g ON g.id_expensa = e.id_expensa
+        LEFT JOIN
+            proveedor p ON p.id_consorcio = c.id_consorcio
+                           AND p.tipo_gasto = (
+                               CASE UPPER(j.TipoGastoJson) COLLATE Modern_Spanish_CI_AS
+                                   WHEN 'BANCARIOS' THEN 'GASTOS BANCARIOS' COLLATE Modern_Spanish_CI_AS
+                                   -- ... (resto de CASE para mapeo de tipo_gasto)
+                                   WHEN 'ADMINISTRACION' THEN 'GASTOS DE ADMINISTRACION' COLLATE Modern_Spanish_CI_AS
+                                   WHEN 'LIMPIEZA' THEN 'GASTOS DE LIMPIEZA' COLLATE Modern_Spanish_CI_AS
+                                   WHEN 'SEGUROS' THEN 'SEGUROS' COLLATE Modern_Spanish_CI_AS
+                                   WHEN 'GASTOS GENERALES' THEN 'GASTOS GENERALES' COLLATE Modern_Spanish_CI_AS
+                                   WHEN 'SERVICIOS PUBLICOS-AGUA' THEN 'SERVICIOS PUBLICOS' COLLATE Modern_Spanish_CI_AS
+                                   WHEN 'SERVICIOS PUBLICOS-LUZ' THEN 'SERVICIOS PUBLICOS' COLLATE Modern_Spanish_CI_AS
+                                   ELSE UPPER(j.TipoGastoJson) COLLATE Modern_Spanish_CI_AS
+                               END
+                           )
+                           AND (
+                               (UPPER(j.TipoGastoJson COLLATE Modern_Spanish_CI_AS) = 'SERVICIOS PUBLICOS-AGUA' AND UPPER(p.nombre_empresa) = 'AYSA')
+                               OR (UPPER(j.TipoGastoJson COLLATE Modern_Spanish_CI_AS) = 'SERVICIOS PUBLICOS-LUZ' AND UPPER(p.nombre_empresa) = 'EDENOR')
+                               OR (UPPER(j.TipoGastoJson COLLATE Modern_Spanish_CI_AS) NOT LIKE 'SERVICIOS PUBLICOS%')
+                           )
+
+        WHERE
+            j.Importe_Decimal IS NOT NULL -- Filtra los valores que no se pudieron parsear
+            AND j.Importe_Decimal > 0 
+            AND NOT EXISTS (
+                SELECT 1
+                FROM gastoOrdinario go_exist
+                WHERE go_exist.id_gasto = g.id_gasto
+                  AND go_exist.tipo_gasto = UPPER(j.TipoGastoJson COLLATE Modern_Spanish_CI_AS)
+            );
+            
+        PRINT 'Carga de Gastos Ordinarios completada. Se insertaron ' + CAST(@@ROWCOUNT AS VARCHAR) + ' registros.';
+        
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR('Error al cargar Gastos Ordinarios desde JSON: %s', 16, 1, @ErrorMessage);
+        RETURN -4;
+    END CATCH
+
+END;
+GO
+
+-- 1. Declarar la variable para la ruta del JSON
+DECLARE @RutaJson VARCHAR(255) = ''; -- <--- ¡ACTUALIZA ESTO!
+
+-- 2. Ejecutar el Stored Procedure
+EXEC spImportarGastosOrdinarios @RutaArchivoJson = @RutaJson;
+GO
+
+select *from gastoOrdinario
+DELETE FROM gastoOrdinario; 
+DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);
+
