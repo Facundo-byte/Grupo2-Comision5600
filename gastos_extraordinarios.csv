@@ -1,0 +1,21 @@
+Consorcio;Tipo;Descripcion;Importe;fecha yyyy-mm-dd;TipoPago;Cuotas
+Pereyra Iraola;Reparacion;Reparacion de estructura de complejo habitacional;482715.97;2025-04-02;total;
+Alberdi;Construccion;Construccion que se incorpora al complejo;378856.3;2025-04-05;total;
+Alzaga;Reparacion;Pintura general de paredes exteriores;497566.34;2025-04-11;total;
+Unzue;Reparacion;Cambio de sistema electrico;184151.76;2025-04-17;total;
+Azcuenaga;Construccion;Instalacion de sistema de seguridad;128429.58;2025-04-29;cuotas;5/7
+Alberdi;Construccion;Renovacion de area comun;327876.91;2025-05-03;total;
+Pereyra Iraola;Reparacion;Reparacion de ascensor;330570.2;2025-05-08;total;
+Azcuenaga;Reparacion;Impermeabilizacion de techos;142629.52;2025-05-12;cuotas;4/4
+Alzaga;Reparacion;Cambio de cañerias principales;123013.98;2025-05-18;cuotas;4/8
+Unzue;Construccion;Instalacion de paneles solares;107849.89;2025-05-23;total;
+Pereyra Iraola;Reparacion;Reparacion de estacionamiento;106438.52;2025-05-29;total;
+Alberdi;Construccion;Renovacion de jardines;227042.76;2025-06-02;total;
+Azcuenaga;Construccion;Instalacion de sistema contra incendios;286294.61;2025-06-07;total;
+Unzue;Reparacion;Cambio de portones de acceso;307551.32;2025-06-11;cuotas;5/10
+Alzaga;Reparacion;Reparacion de piscina;267108.74;2025-06-15;total;
+Alberdi;Construccion;Construccion de gimnasio;364138.42;2025-06-19;cuotas;3/3
+Pereyra Iraola;Construccion;Renovacion de pisos en pasillos;79606.4;2025-06-23;cuotas;1/5
+Azcuenaga;Construccion;Instalacion de luces LED;261051.76;2025-06-26;cuotas;1/5
+Unzue;Reparacion;Reparacion de fachada;443481.11;2025-06-30;total;
+Alzaga;Construccion;Ampliacion del salon de reuniones;370688.58;2025-06-30;total;

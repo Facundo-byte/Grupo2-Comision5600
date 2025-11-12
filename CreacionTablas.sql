@@ -178,11 +178,11 @@ create table gastoExtraordinario (
 	id_consorcio int,
 	tipo_gasto varchar(50),
 	fecha_gasto date,
-	nombre_empresa varchar(50),
-	nro_factura varchar(50),
+	--nombre_empresa varchar(50),
+	--nro_factura varchar(50),
 	descripcion varchar(50),
-	nro_cuota int,
-	total_cuotas int,
+	forma_pago varchar(15),
+	cuota varchar(15),
 	importe decimal(10,2),
 	constraint fk_gastoExtraordinario_id_gasto 
 	foreign key (id_gasto) references gasto (id_gasto),
@@ -256,7 +256,7 @@ GO
 
 -------------------------------------------------------------------------
 -- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
-DECLARE @archivo_personas VARCHAR(255) = ''; --<----RUTA DE ACCESO
+DECLARE @archivo_personas VARCHAR(255) = ''; --<----RUTA DE ACCESO Inquilino-propietarios-datos.csv
 
 -- Restablece el IDENTITY para la prueba
 DELETE FROM persona; 
@@ -309,7 +309,7 @@ GO
 
 -------------------------------------------------------------------------
 -- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
-DECLARE @archivo_consorcios VARCHAR(255) = ''; --<----RUTA DE ACCESO
+DECLARE @archivo_consorcios VARCHAR(255) = ''; --<----RUTA DE ACCESO datos varios 1(Consorcios).csv
 
 -- Restablece el IDENTITY para la prueba
 DELETE FROM consorcio; 
@@ -370,7 +370,7 @@ GO
 
 -------------------------------------------------------------------------
 -- Ejemplo de ejecución (debe estar en el script de testing/invocaciones) 
-DECLARE @archivo_uf VARCHAR(255) = '';--<----RUTA DE ACCESO
+DECLARE @archivo_uf VARCHAR(255) = '';--<----RUTA DE ACCESO UF por consorcio.txt
 
 -- Restablece el IDENTITY para la prueba
 DELETE FROM unidadFuncional; 
@@ -434,7 +434,7 @@ END;
 GO
 -------------------------------------------------------------------------
 -- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
-DECLARE @RutaArchivoC VARCHAR(255) = '';--<----RUTA DE ACCESO
+DECLARE @RutaArchivoC VARCHAR(255) = '';--<----RUTA DE ACCESO Inquilino-propietarios-UF.csv
 EXEC sp_asociar_cuentas_uf @RutaArchivoCuentas = @RutaArchivoC;
 SELECT * FROM unidadFuncional
 --------------------------------------------------------------
@@ -531,8 +531,8 @@ END;
 GO
 
 -----------------------Ejecución---------------------- 
-DECLARE @archivo_relacion_uf VARCHAR(255) = ''; -- <---- RUTA
-DECLARE @archivo_datos_persona VARCHAR(255) = ''; -- <---- RUTA
+DECLARE @archivo_relacion_uf VARCHAR(255) = ''; -- <---- RUTA Inquilino-propietarios-UF.csv
+DECLARE @archivo_datos_persona VARCHAR(255) = ''; -- <---- RUTA Inquilino-propietarios-datos.csv
 
 DELETE FROM personaUf; 
 DBCC CHECKIDENT ('personaUf', RESEED, 0);
@@ -600,7 +600,7 @@ END;
 GO
 
 -----------------------Ejecución---------------------- 
-DECLARE @archivo_pagos VARCHAR(255) = ''; -- <---- RUTA
+DECLARE @archivo_pagos VARCHAR(255) = ''; -- <---- RUTA pagos_consorcios.csv
 DELETE FROM pago; 
 DBCC CHECKIDENT ('pago', RESEED, 0);
 EXEC sp_importar_pagos @RutaArchivoPagos = @archivo_pagos;
@@ -646,7 +646,7 @@ BEGIN
 END;
 GO
 --------------EJECUCION-------------------
-DECLARE @archivo_provedores VARCHAR(255) = ''; -- <---- RUTA
+DECLARE @archivo_provedores VARCHAR(255) = ''; -- <---- RUTA datos varios 1(Proveedores).csv
 DELETE FROM proveedor; 
 DBCC CHECKIDENT ('proveedor', RESEED, 0);
 EXEC sp_importar_proveedores @RutaArchivoProveedores = @archivo_provedores;
@@ -736,7 +736,7 @@ END;
 GO
 
 -- 1. Declarar variables para los parámetros
-DECLARE @periodo_mes_test VARCHAR(12) = 'Junio'; -- El mes que quieres generar
+DECLARE @periodo_mes_test VARCHAR(12) = 'Junio'; -- El mes que quieres generar (Abril, Mayo, Junio)
 DECLARE @anio_test INT = 2025;             -- El año
 
 -- 2. Ejecutar el Stored Procedure
@@ -763,6 +763,9 @@ WHERE
         END)
 ORDER BY c.nombre;
 GO
+
+select * from expensa
+order by id_consorcio
 
 DELETE FROM expensa; 
 DBCC CHECKIDENT ('expensa', RESEED, 0);
@@ -834,7 +837,7 @@ GO
 
 DELETE FROM gasto; 
 DBCC CHECKIDENT ('gasto', RESEED, 0);
-select * from gasto
+
 
 -----------INSERTAR GASTOS ORDINARIOS--------------------------------
 -------------------Versón juan act----------------------
@@ -961,14 +964,85 @@ BEGIN
 END;
 GO
 
+
+
 -- 1. Declarar la variable para la ruta del JSON
 DECLARE @RutaJson VARCHAR(255) = ''; -- <--- ¡ACTUALIZA ESTO!
-
 -- 2. Ejecutar el Stored Procedure
 EXEC spImportarGastosOrdinarios @RutaArchivoJson = @RutaJson;
 GO
 
-select *from gastoOrdinario
+select * from gastoOrdinario
+
 DELETE FROM gastoOrdinario; 
 DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+--CARGAR GASTOS EXTRAORDINARIOS CON SQL DINÁMICO PARA LA RUTA DE ACCESO
+CREATE OR ALTER PROCEDURE sp_importar_gastosExtraordinarios
+    @RutaArchivo VARCHAR(255)  -- Parámetro de entrada para la ruta del archivo
+AS
+BEGIN
+    CREATE TABLE #tempGastoExtraordinario (
+		nombre_consorcio varchar(50),
+		tipo varchar(50),
+		descripcion varchar(100),
+		importe decimal(10,2),
+        fecha date,
+		tipo_pago varchar(15),
+        cuota varchar(15),
+        );
+
+    -- Declarar una variable para el SQL dinámico
+    DECLARE @sql_dinamico NVARCHAR(MAX);
+
+    -- Construir la instrucción BULK INSERT usando el parámetro
+    SET @sql_dinamico = 
+        'BULK INSERT #tempGastoExtraordinario ' + 
+        'FROM ''' + @RutaArchivo + ''' ' +  -- Importante: se usan dos comillas simples ('') para la ruta
+        'WITH ( ' +
+            'FIELDTERMINATOR = '';'', ' +
+            'ROWTERMINATOR = ''\n'', ' +
+            'FIRSTROW = 2 ' +
+        ');';
+
+    -- Ejecutar la importación (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
+    EXEC sp_executesql @sql_dinamico;
+
+    INSERT INTO gastoExtraordinario (id_consorcio, tipo_gasto, descripcion,importe,fecha_gasto,forma_pago,cuota)
+	SELECT c.id_consorcio, tge.tipo, tge.descripcion, tge.importe, tge.fecha, tge.tipo_pago, tge.cuota
+	FROM #tempGastoExtraordinario tge 
+    inner join consorcio c on tge.nombre_consorcio = c.nombre
+    
+    --Asocia id_gasto a cada gasto (lo probé y funciona perfecto, pero testear por las dudas)
+    UPDATE ge 
+    SET ge.id_gasto = g.id_gasto
+    FROM gastoExtraordinario ge
+    JOIN consorcio c ON ge.id_consorcio = c.id_consorcio
+    JOIN expensa e ON e.id_consorcio = c.id_consorcio
+    JOIN gasto g ON g.id_expensa = e.id_expensa
+    WHERE e.periodo = CONVERT(VARCHAR(7), ge.fecha_gasto, 120);
+
+END
+GO
+-------------------------------------------------------------------------
+-- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
+DECLARE @archivo_gastosExtraordinarios VARCHAR(255) = ''; --<----RUTA DE ACCESO a gastos_extraordinarios.csv
+
+-- Restablece el IDENTITY para la prueba
+DELETE FROM gastoExtraordinario; 
+DBCC CHECKIDENT ('gastoExtraordinario', RESEED, 0);
+
+-- Ejecuta el SP pasando la variable con la ruta del archivo
+EXEC sp_importar_gastosExtraordinarios @RutaArchivo = @archivo_gastosExtraordinarios;
+
+-- Verificación
+SELECT * FROM gastoExtraordinario
+order by id_consorcio
+GO
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
