@@ -1,10 +1,10 @@
 -- NOTAS !!!!!!
 -- LEER LOS COMENTARIOS
--- ESTÁN LOS SP CON SQL DINÁMICO Y NORMAL, LOS DEJE POR LAS DUDAS(LOS NORMALES)
+-- ESTï¿½N LOS SP CON SQL DINï¿½MICO Y NORMAL, LOS DEJE POR LAS DUDAS(LOS NORMALES)
 -- ALGUNAS VECES CUANDO SE RESETEA EL IDENTITY DSP EMPIEZA EN 0 (Y NO EN 1, COMO DEBERIA) NO SE PQ, SI ALGUNO SABE BIEN SINO LE PREGUNTAMOS AL PROFE
 -- TODO LO QUE ESTA ACA ANDA (POR AHI HAYA QUE MODIFICAR COSAS) PERO SI NO LES "COMPILA" O TIENEN ERRORES AVISEN Y LO VEMOS, PQ LO PROBE Y ANDA TODO
 -- MODIFICAR LOS BITS DE UF PARA QUE PERMITA SI O NO
--- AGREGAR NOMBRE CONSORCIO EN UF PARA QUE SEA MAS FÁCIL PARA FUTURAS RELACIONES 
+-- AGREGAR NOMBRE CONSORCIO EN UF PARA QUE SEA MAS Fï¿½CIL PARA FUTURAS RELACIONES 
 create database Com5600G02
 go 
 
@@ -82,7 +82,7 @@ create table estadoFinanciero (
 	primary key (id, id_consorcio),
 	constraint fk_estadoFinanciero_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
 go
--- en período cambiaría el tipo de dato 
+-- en perï¿½odo cambiarï¿½a el tipo de dato 
 
 create table unidadFuncional (
 	id_uf int identity(1,1) primary key, --LE AGREGE EL IDENTITY(1,1) POR QUE SINO, NO PODIA IMPORTAR Y HACER CC ERA MUY COMPLEJO PARA TESTAR
@@ -100,7 +100,7 @@ create table unidadFuncional (
 	constraint fk_uf_id_consorcio foreign key (id_consorcio) references consorcio (id_consorcio));
 go 
 
--- el unique ese esta raro debería funcionar para evitar solapamientos
+-- el unique ese esta raro deberï¿½a funcionar para evitar solapamientos
 create table personaUf (
 	id_relacion int identity(1,1) primary key,
 	dni_persona varchar(9),
@@ -180,6 +180,8 @@ create table gastoExtraordinario (
 	fecha_gasto date,
 	--nombre_empresa varchar(50),
 	--nro_factura varchar(50),
+	nombre_empresa varchar(50),
+	--elimine nro_factura por que no aporta en nada y no hay como llenarlo
 	descripcion varchar(50),
 	forma_pago varchar(15),
 	cuota varchar(15),
@@ -207,9 +209,9 @@ go
 --------------------------------------------------------  STORED PROCEDURES  ---------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------
 
---CARGAR PERSONAS CON SQL DINÁMICO PARA LA RUTA DE ACCESO
+--CARGAR PERSONAS CON SQL DINï¿½MICO PARA LA RUTA DE ACCESO
 CREATE OR ALTER PROCEDURE sp_importar_personas
-    @RutaArchivoPersonas VARCHAR(255)  -- Parámetro de entrada para la ruta del archivo
+    @RutaArchivoPersonas VARCHAR(255)  -- Parï¿½metro de entrada para la ruta del archivo
 AS
 BEGIN
    CREATE TABLE #tempPersona (
@@ -221,10 +223,10 @@ BEGIN
 		cuenta varchar(50),
 		inquilino bit,);
 
-    -- Declarar una variable para el SQL dinámico
+    -- Declarar una variable para el SQL dinï¿½mico
     DECLARE @sql_dinamicoPer NVARCHAR(MAX);
 
-    -- Construir la instrucción BULK INSERT usando el parámetro
+    -- Construir la instrucciï¿½n BULK INSERT usando el parï¿½metro
     SET @sql_dinamicoPer = 
         'BULK INSERT #tempPersona ' + 
         'FROM ''' + @RutaArchivoPersonas + ''' ' +  -- Importante: se usan dos comillas simples ('') para la ruta
@@ -234,7 +236,7 @@ BEGIN
             'FIRSTROW = 2 ' +
         ');';
 
-    -- Ejecutar la importación (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
+    -- Ejecutar la importaciï¿½n (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
     EXEC sp_executesql @sql_dinamicoPer;
 	-- Quitar duplicados dentro del CSV
     WITH cte_sin_duplicados AS (
@@ -249,13 +251,13 @@ BEGIN
 		LOWER(REPLACE(LTRIM(RTRIM(email_personal)), ' ', '')), LTRIM(RTRIM(telefono_contacto)), REPLACE(LTRIM(RTRIM(cuenta)), ' ', '')
 	FROM #tempPersona t
    WHERE 
-        ISNULL(dni, '') <> ''  -- Evita DNIs vacíos
+        ISNULL(dni, '') <> ''  -- Evita DNIs vacï¿½os
         AND NOT EXISTS (SELECT 1 FROM persona p WHERE p.dni = t.dni); -- Evita duplicados
 END;
 GO
 
 -------------------------------------------------------------------------
--- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
+-- Ejemplo de ejecuciï¿½n (debe estar en el script de testing/invocaciones)
 DECLARE @archivo_personas VARCHAR(255) = ''; --<----RUTA DE ACCESO Inquilino-propietarios-datos.csv
 
 -- Restablece el IDENTITY para la prueba
@@ -265,14 +267,14 @@ DBCC CHECKIDENT ('persona', RESEED, 0);
 -- Ejecuta el SP pasando la variable con la ruta del archivo
 EXEC sp_importar_personas @RutaArchivoPersonas = @archivo_personas;
 
--- Verificación
+-- Verificaciï¿½n
 SELECT * FROM persona; 
 GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 
---CARGAR CONSORCIOS CON SQL DINÁMICO PARA LA RUTA DE ACCESO
+--CARGAR CONSORCIOS CON SQL DINï¿½MICO PARA LA RUTA DE ACCESO
 CREATE OR ALTER PROCEDURE sp_importar_consorcios
-    @RutaArchivo VARCHAR(255)  -- Parámetro de entrada para la ruta del archivo
+    @RutaArchivo VARCHAR(255)  -- Parï¿½metro de entrada para la ruta del archivo
 AS
 BEGIN
     CREATE TABLE #tempConsorcio (
@@ -282,10 +284,10 @@ BEGIN
 		cant_uf int,
 		cant_m2 int,);
 
-    -- Declarar una variable para el SQL dinámico
+    -- Declarar una variable para el SQL dinï¿½mico
     DECLARE @sql_dinamico NVARCHAR(MAX);
 
-    -- Construir la instrucción BULK INSERT usando el parámetro
+    -- Construir la instrucciï¿½n BULK INSERT usando el parï¿½metro
     SET @sql_dinamico = 
         'BULK INSERT #tempConsorcio ' + 
         'FROM ''' + @RutaArchivo + ''' ' +  -- Importante: se usan dos comillas simples ('') para la ruta
@@ -295,11 +297,11 @@ BEGIN
             'FIRSTROW = 2 ' +
         ');';
 
-    -- Ejecutar la importación (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
+    -- Ejecutar la importaciï¿½n (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
     EXEC sp_executesql @sql_dinamico;
 
     -- Insertar en la tabla final consorcio con transformaciones
-    -- Nota: Aquí se asume que la tabla 'consorcio' no admite duplicados (lo que debes validar)
+    -- Nota: Aquï¿½ se asume que la tabla 'consorcio' no admite duplicados (lo que debes validar)
     INSERT INTO consorcio (nombre, direccion, cant_uf, cant_m2)
 	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(direccion))), cant_uf, cant_m2
 	FROM #tempConsorcio 
@@ -308,7 +310,7 @@ END
 GO
 
 -------------------------------------------------------------------------
--- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
+-- Ejemplo de ejecuciï¿½n (debe estar en el script de testing/invocaciones)
 DECLARE @archivo_consorcios VARCHAR(255) = ''; --<----RUTA DE ACCESO datos varios 1(Consorcios).csv
 
 -- Restablece el IDENTITY para la prueba
@@ -318,14 +320,14 @@ DBCC CHECKIDENT ('consorcio', RESEED, 0);
 -- Ejecuta el SP pasando la variable con la ruta del archivo
 EXEC sp_importar_consorcios @RutaArchivo = @archivo_consorcios;
 
--- Verificación
+-- Verificaciï¿½n
 SELECT * FROM consorcio;
 GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 
---CARGAR UF CON SQL DINÁMICO PARA LA RUTA DE ACCESO
+--CARGAR UF CON SQL DINï¿½MICO PARA LA RUTA DE ACCESO
 CREATE or ALTER PROCEDURE sp_importar_uf
-    @RutaArchivoUF VARCHAR(255)  -- Parámetro de entrada para la ruta del archivo
+    @RutaArchivoUF VARCHAR(255)  -- Parï¿½metro de entrada para la ruta del archivo
 AS
 BEGIN
     CREATE TABLE #tempUf ( 
@@ -340,10 +342,10 @@ BEGIN
 		baulera_m2 varchar(10),
 		cochera_m2 varchar(10));
 
-    -- Declarar una variable para el SQL dinámico
+    -- Declarar una variable para el SQL dinï¿½mico
     DECLARE @sql_dinamicoUF NVARCHAR(MAX);
 
-    -- Construir la instrucción BULK INSERT usando el parámetro
+    -- Construir la instrucciï¿½n BULK INSERT usando el parï¿½metro
     SET @sql_dinamicoUF = 
         'BULK INSERT #tempUf ' + 
         'FROM ''' + @RutaArchivoUF + ''' ' +  -- Importante: se usan dos comillas simples ('') para la ruta
@@ -354,11 +356,11 @@ BEGIN
 			'CODEPAGE = ''65001'' '+
         ');';
 
-    -- Ejecutar la importación (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
+    -- Ejecutar la importaciï¿½n (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
     EXEC sp_executesql @sql_dinamicoUF;
 
     -- Insertar en la tabla final unidadfuncional con transformaciones
-    -- Nota: Aquí se asume que la tabla 'unidadfuncional' no admite duplicados (lo que debes validar)
+    -- Nota: Aquï¿½ se asume que la tabla 'unidadfuncional' no admite duplicados (lo que debes validar)
     INSERT INTO unidadFuncional (id_consorcio, numero_uf, piso, depto, cochera, cochera_m2, baulera, baulera_m2, cant_m2, coeficiente)
 	SELECT    UPPER(c.id_consorcio), CAST(u.numero_uf AS INT), CAST(u.piso AS varchar(3)), CAST(u.depto as varchar(5)), 
         CASE WHEN u.cochera = 'SI' THEN 1 ELSE 0 END, CAST(u.cochera_m2 AS INT), CASE WHEN u.baulera = 'SI' THEN 1 ELSE 0 END, 
@@ -369,7 +371,7 @@ END;
 GO
 
 -------------------------------------------------------------------------
--- Ejemplo de ejecución (debe estar en el script de testing/invocaciones) 
+-- Ejemplo de ejecuciï¿½n (debe estar en el script de testing/invocaciones) 
 DECLARE @archivo_uf VARCHAR(255) = '';--<----RUTA DE ACCESO UF por consorcio.txt
 
 -- Restablece el IDENTITY para la prueba
@@ -379,7 +381,7 @@ DBCC CHECKIDENT ('unidadFuncional', RESEED, 0);
 -- Ejecuta el SP pasando la variable con la ruta del archivo
 EXEC sp_importar_uf @RutaArchivoUF = @archivo_uf;
 
--- Verificación
+-- Verificaciï¿½n
 SELECT * FROM unidadFuncional;
 GO
 -------------------------------------------------------------------------
@@ -433,108 +435,108 @@ BEGIN
 END;
 GO
 -------------------------------------------------------------------------
--- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
+-- Ejemplo de ejecuciï¿½n (debe estar en el script de testing/invocaciones)
 DECLARE @RutaArchivoC VARCHAR(255) = '';--<----RUTA DE ACCESO Inquilino-propietarios-UF.csv
 EXEC sp_asociar_cuentas_uf @RutaArchivoCuentas = @RutaArchivoC;
 SELECT * FROM unidadFuncional
 --------------------------------------------------------------
 
 -- CARGAR personaUF
--- Este SP necesita dos archivos para cruzar la información:
--- 1. El archivo de relación UF-CVU/CBU (Inquilino-propietarios-UF.csv)
+-- Este SP necesita dos archivos para cruzar la informaciï¿½n:
+-- 1. El archivo de relaciï¿½n UF-CVU/CBU (Inquilino-propietarios-UF.csv)
 -- 2. El archivo de datos de Persona (Inquilino-propietarios-datos.csv)
 
 CREATE OR ALTER PROCEDURE sp_importar_persona_uf
-    @RutaArchivoRelacionUF VARCHAR(255),  -- (delimitador '|')
-    @RutaArchivoDatosPersona VARCHAR(255) -- (delimitador ';')
+ï¿½ ï¿½ @RutaArchivoRelacionUF VARCHAR(255), ï¿½-- (delimitador '|')
+ï¿½ ï¿½ @RutaArchivoDatosPersona VARCHAR(255) -- (delimitador ';')
 AS
 BEGIN
-    -- Tabla temporal para la relación UF-CVU/CBU
-    CREATE TABLE #tempRelacionUF (
-        CVU_CBU VARCHAR(50),
-        Nombre_Consorcio VARCHAR(35),
-        nroUnidadFuncional VARCHAR(10),
-        piso VARCHAR(10),
-        departamento VARCHAR(10)
-    );
+ï¿½ ï¿½ -- Tabla temporal para la relaciï¿½n UF-CVU/CBU
+ï¿½ ï¿½ CREATE TABLE #tempRelacionUF (
+ï¿½ ï¿½ ï¿½ ï¿½ CVU_CBU VARCHAR(50),
+ï¿½ ï¿½ ï¿½ ï¿½ Nombre_Consorcio VARCHAR(35),
+ï¿½ ï¿½ ï¿½ ï¿½ nroUnidadFuncional VARCHAR(10),
+ï¿½ ï¿½ ï¿½ ï¿½ piso VARCHAR(10),
+ï¿½ ï¿½ ï¿½ ï¿½ departamento VARCHAR(10)
+ï¿½ ï¿½ );
 
-    -- Tabla temporal para obtener el estado de inquilino y DNI a partir del CVU/CBU
-    CREATE TABLE #tempPersonaStatus (
-        Nombre VARCHAR(50),
-        Apellido VARCHAR(50),
-        DNI VARCHAR(9),
-        Email_Personal VARCHAR(50),
-        Telefono_Contacto VARCHAR(20),
-        Cuenta VARCHAR(50),  
-        Inquilino BIT         
-    );
+ï¿½ ï¿½ -- Tabla temporal para obtener el estado de inquilino y DNI a partir del CVU/CBU
+ï¿½ ï¿½ CREATE TABLE #tempPersonaStatus (
+ï¿½ ï¿½ ï¿½ ï¿½ Nombre VARCHAR(50),
+ï¿½ ï¿½ ï¿½ ï¿½ Apellido VARCHAR(50),
+ï¿½ ï¿½ ï¿½ ï¿½ DNI VARCHAR(9),
+ï¿½ ï¿½ ï¿½ ï¿½ Email_Personal VARCHAR(50),
+ï¿½ ï¿½ ï¿½ ï¿½ Telefono_Contacto VARCHAR(20),
+ï¿½ ï¿½ ï¿½ ï¿½ Cuenta VARCHAR(50), ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ Inquilino BIT ï¿½ ï¿½ ï¿½ ï¿½ 
+ï¿½ ï¿½ );
 
-    DECLARE @sql_dinamico_uf NVARCHAR(MAX);
-    DECLARE @sql_dinamico_per NVARCHAR(MAX);
+ï¿½ ï¿½ DECLARE @sql_dinamico_uf NVARCHAR(MAX);
+ï¿½ ï¿½ DECLARE @sql_dinamico_per NVARCHAR(MAX);
 
-    -- BULK INSERT para la relación UF-CVU/CBU (usando delimitador '|')
-    SET @sql_dinamico_uf =  
-        'BULK INSERT #tempRelacionUF ' +  
-        'FROM ''' + @RutaArchivoRelacionUF + ''' ' +  
-        'WITH ( ' +
-            'FIELDTERMINATOR = ''|'', ' +
-            'ROWTERMINATOR = ''\n'', ' +
-            'FIRSTROW = 2 ' +
-        ');';
-    EXEC sp_executesql @sql_dinamico_uf;
+ï¿½ ï¿½ -- BULK INSERT para la relaciï¿½n UF-CVU/CBU (usando delimitador '|')
+ï¿½ ï¿½ SET @sql_dinamico_uf = ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'BULK INSERT #tempRelacionUF ' + ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'FROM ''' + @RutaArchivoRelacionUF + ''' ' + ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'WITH ( ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'FIELDTERMINATOR = ''|'', ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'ROWTERMINATOR = ''\n'', ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'FIRSTROW = 2 ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ');';
+ï¿½ ï¿½ EXEC sp_executesql @sql_dinamico_uf;
 
-    -- BULK INSERT para el estado de Inquilino
-    SET @sql_dinamico_per =  
-        'BULK INSERT #tempPersonaStatus ' +  
-        'FROM ''' + @RutaArchivoDatosPersona + ''' ' +  
-        'WITH ( ' +
-            'FIELDTERMINATOR = '';'', ' +
-            'ROWTERMINATOR = ''\n'', ' +
-            'FIRSTROW = 2 ' +
-        ');';
-    EXEC sp_executesql @sql_dinamico_per;
+ï¿½ ï¿½ -- BULK INSERT para el estado de Inquilino
+ï¿½ ï¿½ SET @sql_dinamico_per = ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'BULK INSERT #tempPersonaStatus ' + ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'FROM ''' + @RutaArchivoDatosPersona + ''' ' + ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'WITH ( ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'FIELDTERMINATOR = '';'', ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'ROWTERMINATOR = ''\n'', ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'FIRSTROW = 2 ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ');';
+ï¿½ ï¿½ EXEC sp_executesql @sql_dinamico_per;
 
-    -- Insertar en personaUf (JOIN múltiple)
-    INSERT INTO personaUf (dni_persona, id_uf, fecha_desde, fecha_hasta, tipo_responsable)
-    SELECT
-        p.dni, 
-        uf.id_uf,
-        GETDATE() AS fecha_desde, -- Asumimos la fecha actual para la relación (esto nose si es asi)
-        NULL AS fecha_hasta,
-        -- Inferimos el tipo de responsable usando la columna 'Inquilino'
-        CASE WHEN tps.Inquilino = 1 THEN 'INQUILINO' ELSE 'PROPIETARIO' END AS tipo_responsable
-    FROM
-        #tempRelacionUF truf
-        -- Unir con el estado de inquilino para obtener el DNI y el tipo de responsable
-        INNER JOIN #tempPersonaStatus tps ON REPLACE(LTRIM(RTRIM(truf.CVU_CBU)), ' ', '') = REPLACE(LTRIM(RTRIM(tps.Cuenta)), ' ', '')
-        -- Unir con la tabla Persona para asegurar la existencia del DNI
-        INNER JOIN persona p ON p.dni = LTRIM(RTRIM(tps.DNI))
-        -- Unir con la tabla Consorcio
-        INNER JOIN consorcio c ON c.nombre = truf.Nombre_Consorcio
-        -- Unir con la tabla Unidad Funcional para obtener el id_uf
-        INNER JOIN unidadFuncional uf ON
-            uf.id_consorcio = c.id_consorcio AND
-            uf.numero_uf = CAST(truf.nroUnidadFuncional AS INT) AND
-            uf.piso = truf.piso AND
-            uf.depto = truf.departamento
-    WHERE
-        -- Evitar duplicados ya insertados (si se ejecuta el SP varias veces)
-        NOT EXISTS (
-            SELECT 1
-            FROM personaUf pu
-            WHERE pu.dni_persona = p.dni
-                AND pu.id_uf = uf.id_uf
-                AND pu.fecha_hasta IS NULL -- Solo consideramos las relaciones activas
-        );
+ï¿½ ï¿½ -- Insertar en personaUf (JOIN mï¿½ltiple)
+ï¿½ ï¿½ INSERT INTO personaUf (dni_persona, id_uf, fecha_desde, fecha_hasta, tipo_responsable)
+ï¿½ ï¿½ SELECT
+ï¿½ ï¿½ ï¿½ ï¿½ p.dni, 
+ï¿½ ï¿½ ï¿½ ï¿½ uf.id_uf,
+ï¿½ ï¿½ ï¿½ ï¿½ GETDATE() AS fecha_desde, -- Asumimos la fecha actual para la relaciï¿½n (esto nose si es asi)
+ï¿½ ï¿½ ï¿½ ï¿½ NULL AS fecha_hasta,
+ï¿½ ï¿½ ï¿½ ï¿½ -- Inferimos el tipo de responsable usando la columna 'Inquilino'
+ï¿½ ï¿½ ï¿½ ï¿½ CASE WHEN tps.Inquilino = 1 THEN 'INQUILINO' ELSE 'PROPIETARIO' END AS tipo_responsable
+ï¿½ ï¿½ FROM
+ï¿½ ï¿½ ï¿½ ï¿½ #tempRelacionUF truf
+ï¿½ ï¿½ ï¿½ ï¿½ -- Unir con el estado de inquilino para obtener el DNI y el tipo de responsable
+ï¿½ ï¿½ ï¿½ ï¿½ INNER JOIN #tempPersonaStatus tps ON REPLACE(LTRIM(RTRIM(truf.CVU_CBU)), ' ', '') = REPLACE(LTRIM(RTRIM(tps.Cuenta)), ' ', '')
+ï¿½ ï¿½ ï¿½ ï¿½ -- Unir con la tabla Persona para asegurar la existencia del DNI
+ï¿½ ï¿½ ï¿½ ï¿½ INNER JOIN persona p ON p.dni = LTRIM(RTRIM(tps.DNI))
+ï¿½ ï¿½ ï¿½ ï¿½ -- Unir con la tabla Consorcio
+ï¿½ ï¿½ ï¿½ ï¿½ INNER JOIN consorcio c ON c.nombre = truf.Nombre_Consorcio
+ï¿½ ï¿½ ï¿½ ï¿½ -- Unir con la tabla Unidad Funcional para obtener el id_uf
+ï¿½ ï¿½ ï¿½ ï¿½ INNER JOIN unidadFuncional uf ON
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ uf.id_consorcio = c.id_consorcio AND
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ uf.numero_uf = CAST(truf.nroUnidadFuncional AS INT) AND
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ uf.piso = truf.piso AND
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ uf.depto = truf.departamento
+ï¿½ ï¿½ WHERE
+ï¿½ ï¿½ ï¿½ ï¿½ -- Evitar duplicados ya insertados (si se ejecuta el SP varias veces)
+ï¿½ ï¿½ ï¿½ ï¿½ NOT EXISTS (
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ SELECT 1
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ FROM personaUf pu
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ WHERE pu.dni_persona = p.dni
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ AND pu.id_uf = uf.id_uf
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ AND pu.fecha_hasta IS NULL -- Solo consideramos las relaciones activas
+ï¿½ ï¿½ ï¿½ ï¿½ );
 
 END;
 GO
 
------------------------Ejecución---------------------- 
+-----------------------Ejecuciï¿½n---------------------- 
 DECLARE @archivo_relacion_uf VARCHAR(255) = ''; -- <---- RUTA Inquilino-propietarios-UF.csv
 DECLARE @archivo_datos_persona VARCHAR(255) = ''; -- <---- RUTA Inquilino-propietarios-datos.csv
 
-DELETE FROM personaUf; 
+DELETE FROM personaUf;ï¿½
 DBCC CHECKIDENT ('personaUf', RESEED, 0);
 EXEC sp_importar_persona_uf 
  @RutaArchivoRelacionUF = @archivo_relacion_uf, 
@@ -546,62 +548,62 @@ GO
 -----------------------------------------------------
 -- CARGAR PAGO
 CREATE OR ALTER PROCEDURE sp_importar_pagos
-    @RutaArchivoPagos VARCHAR(255)
+ï¿½ ï¿½ @RutaArchivoPagos VARCHAR(255)
 AS
 BEGIN
-   
-    CREATE TABLE #tempPago (
-        Id_de_pago VARCHAR(10),
-        fecha VARCHAR(20),
-        CVU_CBU VARCHAR(50),
-        Valor VARCHAR(30)
-    );
+ï¿½ ï¿½
+ï¿½ ï¿½ CREATE TABLE #tempPago (
+ï¿½ ï¿½ ï¿½ ï¿½ Id_de_pago VARCHAR(10),
+ï¿½ ï¿½ ï¿½ ï¿½ fecha VARCHAR(20),
+ï¿½ ï¿½ ï¿½ ï¿½ CVU_CBU VARCHAR(50),
+ï¿½ ï¿½ ï¿½ ï¿½ Valor VARCHAR(30)
+ï¿½ ï¿½ );
 
-    DECLARE @sql_dinamico_pagos NVARCHAR(MAX);
+ï¿½ ï¿½ DECLARE @sql_dinamico_pagos NVARCHAR(MAX);
 
-    -- Construir la instrucción BULK INSERT
-    SET @sql_dinamico_pagos =  
-        'BULK INSERT #tempPago ' +  
-        'FROM ''' + @RutaArchivoPagos + ''' ' +  
-        'WITH ( ' +
-            'FIELDTERMINATOR = '','', ' + 
-            'ROWTERMINATOR = ''\n'', ' +
-            'FIRSTROW = 2 ' +
-        ');';
+ï¿½ ï¿½ -- Construir la instrucciï¿½n BULK INSERT
+ï¿½ ï¿½ SET @sql_dinamico_pagos = ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'BULK INSERT #tempPago ' + ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'FROM ''' + @RutaArchivoPagos + ''' ' + ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'WITH ( ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'FIELDTERMINATOR = '','', ' + 
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'ROWTERMINATOR = ''\n'', ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'FIRSTROW = 2 ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ');';
 
-    EXEC sp_executesql @sql_dinamico_pagos;
-    -- Transformaciones de datos:
-    --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
-    --  Convertir la fecha a formato DATE.
-   
+ï¿½ ï¿½ EXEC sp_executesql @sql_dinamico_pagos;
+ï¿½ ï¿½ -- Transformaciones de datos:
+ï¿½ ï¿½ --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
+ï¿½ ï¿½ --  Convertir la fecha a formato DATE.
+ï¿½ ï¿½
 
-    INSERT INTO pago (fecha, cuenta_origen, importe, asociado)
-    SELECT
-        TRY_CONVERT(DATE, t.fecha, 103), -- Formato 103: dd/mm/yyyy
-        REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', ''),
-        CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2)),
-        'NO' -- Valor por defecto. Se podría actualizar a 'SI' cuando se genere la Expensa/EstadoCuentaProrrateo (creo)
-    FROM
-        #tempPago t
-    WHERE
-        ISNUMERIC(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '')) = 1  -- Solo importamos si el valor es numérico válido
-        AND TRY_CONVERT(DATE, t.fecha, 103) IS NOT NULL  -- Solo importamos si la fecha es válida
-        -- Evitar duplicados (mismo CVU/CBU, misma fecha, mismo importe)
-        AND NOT EXISTS (
-            SELECT 1
-            FROM pago p
-            WHERE
-                p.cuenta_origen = REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', '') AND
-                p.fecha = TRY_CONVERT(DATE, t.fecha, 103) AND
-                p.importe = CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2))
-        );
+ï¿½ ï¿½ INSERT INTO pago (fecha, cuenta_origen, importe, asociado)
+ï¿½ ï¿½ SELECT
+ï¿½ ï¿½ ï¿½ ï¿½ TRY_CONVERT(DATE, t.fecha, 103), -- Formato 103: dd/mm/yyyy
+ï¿½ ï¿½ ï¿½ ï¿½ REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', ''),
+ï¿½ ï¿½ ï¿½ ï¿½ CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2)),
+ï¿½ ï¿½ ï¿½ ï¿½ 'NO' -- Valor por defecto. Se podrï¿½a actualizar a 'SI' cuando se genere la Expensa/EstadoCuentaProrrateo (creo)
+ï¿½ ï¿½ FROM
+ï¿½ ï¿½ ï¿½ ï¿½ #tempPago t
+ï¿½ ï¿½ WHERE
+ï¿½ ï¿½ ï¿½ ï¿½ ISNUMERIC(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '')) = 1 ï¿½-- Solo importamos si el valor es numï¿½rico vï¿½lido
+ï¿½ ï¿½ ï¿½ ï¿½ AND TRY_CONVERT(DATE, t.fecha, 103) IS NOT NULL ï¿½-- Solo importamos si la fecha es vï¿½lida
+ï¿½ ï¿½ ï¿½ ï¿½ -- Evitar duplicados (mismo CVU/CBU, misma fecha, mismo importe)
+ï¿½ ï¿½ ï¿½ ï¿½ AND NOT EXISTS (
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ SELECT 1
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ FROM pago p
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ WHERE
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ p.cuenta_origen = REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', '') AND
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ p.fecha = TRY_CONVERT(DATE, t.fecha, 103) AND
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ p.importe = CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2))
+ï¿½ ï¿½ ï¿½ ï¿½ );
 
 END;
 GO
 
------------------------Ejecución---------------------- 
+-----------------------Ejecuciï¿½n---------------------- 
 DECLARE @archivo_pagos VARCHAR(255) = ''; -- <---- RUTA pagos_consorcios.csv
-DELETE FROM pago; 
+DELETE FROM pago;ï¿½
 DBCC CHECKIDENT ('pago', RESEED, 0);
 EXEC sp_importar_pagos @RutaArchivoPagos = @archivo_pagos;
 SELECT * FROM pago;
@@ -609,45 +611,45 @@ GO
 ---------------------------------------------------
 -- IMPORTAR PROVEEDORES
 CREATE OR ALTER PROCEDURE sp_importar_proveedores
-    @RutaArchivoProveedores VARCHAR(255)
+ï¿½ ï¿½ @RutaArchivoProveedores VARCHAR(255)
 AS
 BEGIN
-   
-    CREATE TABLE #tempProveedor (
+ï¿½ ï¿½
+ï¿½ ï¿½ CREATE TABLE #tempProveedor (
 		tipo_gasto varchar(50),
 		nombre_empresa varchar(100),
 		alias varchar(50),
 		nombre_consorcio varchar(50)
-    );
+ï¿½ ï¿½ );
 
-    DECLARE @sql_dinamico_proveedores NVARCHAR(MAX);
+ï¿½ ï¿½ DECLARE @sql_dinamico_proveedores NVARCHAR(MAX);
 
-    -- Construir la instrucción BULK INSERT
-    SET @sql_dinamico_proveedores =  
-        'BULK INSERT #tempProveedor ' +  
-        'FROM ''' + @RutaArchivoProveedores + ''' ' +  
-        'WITH ( ' +
-            'FIELDTERMINATOR = '';'', ' +
+ï¿½ ï¿½ -- Construir la instrucciï¿½n BULK INSERT
+ï¿½ ï¿½ SET @sql_dinamico_proveedores = ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'BULK INSERT #tempProveedor ' + ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'FROM ''' + @RutaArchivoProveedores + ''' ' + ï¿½
+ï¿½ ï¿½ ï¿½ ï¿½ 'WITH ( ' +
+ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ 'FIELDTERMINATOR = '';'', ' +
             'ROWTERMINATOR = ''\n'', ' +
             'FIRSTROW = 2 ' +
-        ');';
+ï¿½ ï¿½ ï¿½ ï¿½ ');';
 
-    EXEC sp_executesql @sql_dinamico_proveedores;
-    -- Transformaciones de datos:
-    --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
-    --  Convertir la fecha a formato DATE.
-   
+ï¿½ ï¿½ EXEC sp_executesql @sql_dinamico_proveedores;
+ï¿½ ï¿½ -- Transformaciones de datos:
+ï¿½ ï¿½ --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
+ï¿½ ï¿½ --  Convertir la fecha a formato DATE.
+ï¿½ ï¿½
 
-    INSERT INTO proveedor (id_consorcio, tipo_gasto, nombre_empresa, alias)
-    SELECT 
+ï¿½ ï¿½ INSERT INTO proveedor (id_consorcio, tipo_gasto, nombre_empresa, alias)
+ï¿½ ï¿½ SELECT 
 		c.id_consorcio, p.tipo_gasto, p.nombre_empresa, p.alias
-    FROM
+ï¿½ ï¿½ FROM
 		consorcio c INNER JOIN #tempProveedor p ON c.nombre = p.nombre_consorcio
 END;
 GO
 --------------EJECUCION-------------------
 DECLARE @archivo_provedores VARCHAR(255) = ''; -- <---- RUTA datos varios 1(Proveedores).csv
-DELETE FROM proveedor; 
+DELETE FROM proveedor;ï¿½
 DBCC CHECKIDENT ('proveedor', RESEED, 0);
 EXEC sp_importar_proveedores @RutaArchivoProveedores = @archivo_provedores;
 SELECT * FROM proveedor;
@@ -656,19 +658,19 @@ GO
 ----------------------------------------------------------------------IMPORTAR EXPENSAS-------------------------------------------------------
 CREATE OR ALTER PROCEDURE spGenerarExpensas
     @periodo_mes VARCHAR(12), -- Nombre del mes (ej. 'Abril')
-    @anio INT                 -- Año (ej. 2025)
+    @anio INT                 -- Aï¿½o (ej. 2025)
 AS
 BEGIN
     SET NOCOUNT ON;
     
-    DECLARE @periodo_completo VARCHAR(10); -- Almacenará el formato YYYY-MM
+    DECLARE @periodo_completo VARCHAR(10); -- Almacenarï¿½ el formato YYYY-MM
     
     -- ==========================================================
-    -- 1. VALIDACIONES INICIALES y CONSTRUCCIÓN DEL PERÍODO
+    -- 1. VALIDACIONES INICIALES y CONSTRUCCIï¿½N DEL PERï¿½ODO
     -- ==========================================================
     
     -- Validamos y convertimos el periodo a formato YYYY-MM para el campo 'periodo'
-    -- (Esta lógica asegura que solo se procesen meses válidos)
+    -- (Esta lï¿½gica asegura que solo se procesen meses vï¿½lidos)
     WITH Meses AS (
         SELECT 'enero' AS nombre, '01' AS num UNION ALL SELECT 'febrero', '02' UNION ALL 
         SELECT 'marzo', '03' UNION ALL SELECT 'abril', '04' UNION ALL 
@@ -681,15 +683,15 @@ BEGIN
     FROM Meses
     WHERE nombre = LOWER(@periodo_mes);
     
-    -- Verificamos si la conversión falló (indicando un mes inválido)
+    -- Verificamos si la conversiï¿½n fallï¿½ (indicando un mes invï¿½lido)
     IF @periodo_completo IS NULL
     BEGIN
-        RAISERROR('Error: El nombre de mes ingresado no es válido.', 16, 1);
+        RAISERROR('Error: El nombre de mes ingresado no es vï¿½lido.', 16, 1);
         RETURN -1; 
     END
 
     -- ==========================================================
-    -- 2. GENERACIÓN E INSERCIÓN DE EXPENSAS POR CONSORCIO
+    -- 2. GENERACIï¿½N E INSERCIï¿½N DE EXPENSAS POR CONSORCIO
     -- ==========================================================
     
     BEGIN TRY
@@ -711,10 +713,10 @@ BEGIN
                   AND e.periodo = @periodo_completo
             );
 
-        -- Mensaje de éxito o advertencia
+        -- Mensaje de ï¿½xito o advertencia
         IF @@ROWCOUNT = 0
         BEGIN
-            PRINT 'Advertencia: No se insertaron nuevas expensas. Ya existían para el periodo, o no hay consorcios activos.';
+            PRINT 'Advertencia: No se insertaron nuevas expensas. Ya existï¿½an para el periodo, o no hay consorcios activos.';
         END
         ELSE
         BEGIN
@@ -735,16 +737,16 @@ BEGIN
 END;
 GO
 
--- 1. Declarar variables para los parámetros
+-- 1. Declarar variables para los parï¿½metros
 DECLARE @periodo_mes_test VARCHAR(12) = 'Junio'; -- El mes que quieres generar (Abril, Mayo, Junio)
-DECLARE @anio_test INT = 2025;             -- El año
+DECLARE @anio_test INT = 2025;             -- El aï¿½o
 
 -- 2. Ejecutar el Stored Procedure
 EXEC spGenerarExpensas    
     @periodo_mes = @periodo_mes_test,
     @anio = @anio_test;
 
--- 3. Verificación de Resultados
+-- 3. Verificaciï¿½n de Resultados
 SELECT 
     e.id_expensa,
     e.periodo,
@@ -767,7 +769,7 @@ GO
 select * from expensa
 order by id_consorcio
 
-DELETE FROM expensa; 
+DELETE FROM expensa;ï¿½
 DBCC CHECKIDENT ('expensa', RESEED, 0);
 
 -----------------------INSERTAR GASTOS------------------------------
@@ -776,7 +778,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- 1. Insertar un registro de Gasto por cada Expensa que aún no tenga uno.
+    -- 1. Insertar un registro de Gasto por cada Expensa que aï¿½n no tenga uno.
     INSERT INTO gasto (
         id_expensa, 
         periodo, 
@@ -786,19 +788,19 @@ BEGIN
     SELECT
         e.id_expensa,
         e.periodo, -- Heredamos el periodo directamente de la Expensa
-        NULL,      -- Valor NULL según el requerimiento
-        NULL       -- Valor NULL según el requerimiento
+        NULL,      -- Valor NULL segï¿½n el requerimiento
+        NULL       -- Valor NULL segï¿½n el requerimiento
     FROM 
         expensa e
     WHERE
-        -- Cláusula NOT EXISTS para asegurar la unicidad (no crear duplicados)
+        -- Clï¿½usula NOT EXISTS para asegurar la unicidad (no crear duplicados)
         NOT EXISTS (
             SELECT 1 
             FROM Gasto g
             WHERE g.id_expensa = e.id_expensa
         );
 
-    -- Mensaje de éxito o advertencia
+    -- Mensaje de ï¿½xito o advertencia
     IF @@ROWCOUNT = 0
     BEGIN
         PRINT 'Advertencia: No se insertaron nuevos registros de Gasto. Todas las expensas ya tienen un registro asociado.';
@@ -819,8 +821,8 @@ GO
 
 select * from gasto
 
--- Verificación de Resultados
--- Muestra el número de registros en Gasto que tienen subtotales en NULL
+-- Verificaciï¿½n de Resultados
+-- Muestra el nï¿½mero de registros en Gasto que tienen subtotales en NULL
 SELECT 
     COUNT(*) AS Total_Registros_Gasto_Creados
 FROM 
@@ -829,29 +831,29 @@ WHERE
     g.subtotal_ordinarios IS NULL 
     AND g.subtotal_extraordinarios IS NULL;
 
--- Muestra algunos de los nuevos registros para inspección
+-- Muestra algunos de los nuevos registros para inspecciï¿½n
 SELECT TOP 10 *
 FROM gasto
 ORDER BY id_gasto DESC;
 GO
 
-DELETE FROM gasto; 
+DELETE FROM gasto;ï¿½
 DBCC CHECKIDENT ('gasto', RESEED, 0);
 
 
 -----------INSERTAR GASTOS ORDINARIOS--------------------------------
--------------------Versón juan act----------------------
-CREATE OR ALTER PROCEDURE spImportarGastosOrdinarios
-    @RutaArchivoJson VARCHAR(255) -- Parámetro para la ruta del archivo JSON
+-------------------Versï¿½n juan act----------------------
+/*CREATE OR ALTER PROCEDURE spImportarGastosOrdinarios
+    @RutaArchivoJson VARCHAR(255) -- Parï¿½metro para la ruta del archivo JSON
 AS
 BEGIN
     SET NOCOUNT ON;
     
-    -- Variables para SQL Dinámico y el contenido del JSON
+    -- Variables para SQL Dinï¿½mico y el contenido del JSON
     DECLARE @sql_dinamico NVARCHAR(MAX);
     DECLARE @JsonData NVARCHAR(MAX); 
 
-    -- [SECCIÓN 1: EXTRACT (Lectura del Archivo)]
+    -- [SECCIï¿½N 1: EXTRACT (Lectura del Archivo)]
     SET @sql_dinamico = 
         'SELECT @JsonData = BulkColumn FROM OPENROWSET(BULK ''' + @RutaArchivoJson + ''', SINGLE_CLOB) AS J;';
     
@@ -862,11 +864,11 @@ BEGIN
 
     IF @JsonData IS NULL OR @JsonData = ''
     BEGIN
-        RAISERROR('Error: No se pudo leer el archivo JSON o está vacío.', 16, 1);
+        RAISERROR('Error: No se pudo leer el archivo JSON o estï¿½ vacï¿½o.', 16, 1);
         RETURN -1;
     END
 
-    -- [SECCIÓN 2: TRANSFORM & LOAD]
+    -- [SECCIï¿½N 2: TRANSFORM & LOAD]
     
     BEGIN TRY
         
@@ -877,11 +879,11 @@ BEGIN
                 GastoData.[key] AS TipoGastoJson,
                 
                 -- ***************************************************************
-                -- SOLUCIÓN FINAL A TRUNCAMIENTO Y FORMATO REGIONAL (TRY_PARSE)
+                -- SOLUCIï¿½N FINAL A TRUNCAMIENTO Y FORMATO REGIONAL (TRY_PARSE)
                 -- ***************************************************************
                 TRY_PARSE(
                     TRIM(GastoData.value) -- Limpiamos solo espacios externos
-                    AS DECIMAL(18, 2) USING 'es-ES' -- Usa el formato Español (punto=miles, coma=decimal)
+                    AS DECIMAL(18, 2) USING 'es-ES' -- Usa el formato Espaï¿½ol (punto=miles, coma=decimal)
                 ) AS Importe_Decimal
                 
             FROM 
@@ -967,20 +969,126 @@ GO
 
 
 -- 1. Declarar la variable para la ruta del JSON
-DECLARE @RutaJson VARCHAR(255) = ''; -- <--- ¡ACTUALIZA ESTO!
+DECLARE @RutaJson VARCHAR(255) = ''; -- <--- ï¿½ACTUALIZA ESTO!
 -- 2. Ejecutar el Stored Procedure
 EXEC spImportarGastosOrdinarios @RutaArchivoJson = @RutaJson;
 GO
 
 select * from gastoOrdinario
 
-DELETE FROM gastoOrdinario; 
+DELETE FROM gastoOrdinario;ï¿½
+DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);*/
+
+CREATE OR ALTER PROCEDURE sp_gastos_ordinarios 
+    @RutaArchivoJSON NVARCHAR(4000)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    CREATE TABLE #gastoOrdinarioTemp (
+        nombre NVARCHAR(100),
+        mes NVARCHAR(20),
+        bancarios NVARCHAR(20),
+        limpieza NVARCHAR(20),
+        administracion NVARCHAR(20),
+        seguros NVARCHAR(20),
+        gastosGenerales NVARCHAR(20),
+        agua NVARCHAR(20),
+        luz NVARCHAR(20)
+    );
+
+    DECLARE @SQL NVARCHAR(MAX);
+    SET @SQL = N'
+    INSERT INTO #gastoOrdinarioTemp (nombre, mes, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
+    SELECT nombre, mes, bancarios, limpieza, administracion, seguros, generales, agua, luz
+    FROM OPENROWSET (BULK ''' + @RutaArchivoJSON + N''', SINGLE_CLOB) AS j
+    CROSS APPLY OPENJSON (BulkColumn)
+    WITH (
+        nombre NVARCHAR(100)  ''$."Nombre del consorcio"'',
+        mes NVARCHAR(20) ''$.Mes'',
+        bancarios NVARCHAR(20) ''$.BANCARIOS'',
+        limpieza NVARCHAR(20)  ''$.LIMPIEZA'',
+        administracion NVARCHAR(20)  ''$.ADMINISTRACION'',
+        seguros NVARCHAR(20) ''$.SEGUROS'',
+        generales NVARCHAR(20) ''$."GASTOS GENERALES"'',
+        agua NVARCHAR(20)  ''$."SERVICIOS PUBLICOS-Agua"'',
+        luz NVARCHAR(20)  ''$."SERVICIOS PUBLICOS-Luz"''
+    );';
+    EXEC sp_executesql @SQL;
+
+    SET LANGUAGE SPANISH;
+    DECLARE @ANO_ACTUAL NVARCHAR(4) = CAST(YEAR(GETDATE()) AS NVARCHAR);
+
+
+    INSERT INTO gastoOrdinario (id_gasto, id_consorcio, fecha_gasto, tipo_gasto, subtipoGasto, nombre_empresa, importe)
+    SELECT 
+        NULL AS id_gasto, 
+        c.id_consorcio,
+        EOMONTH(CONVERT(date, '01-' + t.mes + '-' + @ANO_ACTUAL, 105)) AS fecha_gasto,
+        CASE 
+            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN 'GASTOS BANCARIOS'
+            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN 'GASTOS DE ADMINISTRACION'
+            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN 'SEGUROS'
+            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN 'GASTOS DE LIMPIEZA'
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' THEN 'SERVICIOS PUBLICOS'
+            ELSE 'OTROS'
+        END AS tipo_gasto,
+        CASE 
+            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN 'GASTOS BANCARIOS'
+            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN 'HONORARIOS'
+            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN 'INTEGRAL DE CONSORCIO'
+            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN 'SERVICIO DE LIMPIEZA'
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%AYSA%' THEN 'SERVICIO DE AGUA'
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%EDENOR%' THEN 'SERVICIO DE ELECTRICIDAD'
+            ELSE 'OTROS'
+        END AS subtipoGasto,
+        UPPER(LTRIM(RTRIM(
+            CASE 
+                WHEN CHARINDEX('-', p.nombre_empresa) > 0 
+                    THEN LEFT(p.nombre_empresa, CHARINDEX('-', p.nombre_empresa) - 1)
+                ELSE p.nombre_empresa
+            END
+        ))) AS nombre_empresa,
+      
+        CASE 
+            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.bancarios, ',', ''), '.', '.'), ' ', '') AS decimal(10,2))
+            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.administracion, ',', ''), '.', '.'), ' ', '') AS decimal(10,4))
+            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.seguros, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
+            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.limpieza, ',', ''), '.', '.'), ' ', '') AS decimal(10,4))
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%AYSA%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.agua, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%EDENOR%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.luz, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
+            ELSE 0
+        END AS importe
+    FROM #gastoOrdinarioTemp t
+    INNER JOIN consorcio c 
+        ON UPPER(LTRIM(RTRIM(c.nombre))) = UPPER(LTRIM(RTRIM(t.nombre)))
+    INNER JOIN proveedor p 
+        ON c.id_consorcio = p.id_consorcio;
+
+
+    
+
+    DROP TABLE #gastoOrdinarioTemp;
+
+
+END
+GO
+
+--prueba
+DECLARE @archivo NVARCHAR(4000) = 'la ruta del .json';
+
+DELETE FROM gastoOrdinario;
 DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);
 
+EXEC sp_gastos_ordinarios @RutaArchivoJSON = @archivo;
+
+SELECT * FROM gastoOrdinario;
+GO
+
 --------------------------------------------------------------------------------------------------------------------------------------------
---CARGAR GASTOS EXTRAORDINARIOS CON SQL DINÁMICO PARA LA RUTA DE ACCESO
+--CARGAR GASTOS EXTRAORDINARIOS CON SQL DINï¿½MICO PARA LA RUTA DE ACCESO
 CREATE OR ALTER PROCEDURE sp_importar_gastosExtraordinarios
-    @RutaArchivo VARCHAR(255)  -- Parámetro de entrada para la ruta del archivo
+    @RutaArchivo VARCHAR(255)  -- Parï¿½metro de entrada para la ruta del archivo
 AS
 BEGIN
     CREATE TABLE #tempGastoExtraordinario (
@@ -993,10 +1101,10 @@ BEGIN
         cuota varchar(15),
         );
 
-    -- Declarar una variable para el SQL dinámico
+    -- Declarar una variable para el SQL dinï¿½mico
     DECLARE @sql_dinamico NVARCHAR(MAX);
 
-    -- Construir la instrucción BULK INSERT usando el parámetro
+    -- Construir la instrucciï¿½n BULK INSERT usando el parï¿½metro
     SET @sql_dinamico = 
         'BULK INSERT #tempGastoExtraordinario ' + 
         'FROM ''' + @RutaArchivo + ''' ' +  -- Importante: se usan dos comillas simples ('') para la ruta
@@ -1006,7 +1114,7 @@ BEGIN
             'FIRSTROW = 2 ' +
         ');';
 
-    -- Ejecutar la importación (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
+    -- Ejecutar la importaciï¿½n (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
     EXEC sp_executesql @sql_dinamico;
 
     INSERT INTO gastoExtraordinario (id_consorcio, tipo_gasto, descripcion,importe,fecha_gasto,forma_pago,cuota)
@@ -1014,7 +1122,7 @@ BEGIN
 	FROM #tempGastoExtraordinario tge 
     inner join consorcio c on tge.nombre_consorcio = c.nombre
     
-    --Asocia id_gasto a cada gasto (lo probé y funciona perfecto, pero testear por las dudas)
+    --Asocia id_gasto a cada gasto (lo probï¿½ y funciona perfecto, pero testear por las dudas)
     UPDATE ge 
     SET ge.id_gasto = g.id_gasto
     FROM gastoExtraordinario ge
@@ -1026,7 +1134,7 @@ BEGIN
 END
 GO
 -------------------------------------------------------------------------
--- Ejemplo de ejecución (debe estar en el script de testing/invocaciones)
+-- Ejemplo de ejecuciï¿½n (debe estar en el script de testing/invocaciones)
 DECLARE @archivo_gastosExtraordinarios VARCHAR(255) = ''; --<----RUTA DE ACCESO a gastos_extraordinarios.csv
 
 -- Restablece el IDENTITY para la prueba
@@ -1036,11 +1144,12 @@ DBCC CHECKIDENT ('gastoExtraordinario', RESEED, 0);
 -- Ejecuta el SP pasando la variable con la ruta del archivo
 EXEC sp_importar_gastosExtraordinarios @RutaArchivo = @archivo_gastosExtraordinarios;
 
--- Verificación
+-- Verificaciï¿½n
 SELECT * FROM gastoExtraordinario
 order by id_consorcio
 GO
 --------------------------------------------------------------------------------------------------------------------------------------------
+
 
 
 
