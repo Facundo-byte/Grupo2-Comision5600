@@ -179,7 +179,7 @@ create table gastoExtraordinario (
 	tipo_gasto varchar(50),
 	fecha_gasto date,
 	nombre_empresa varchar(50),
-	nro_factura varchar(50),
+	--elimine nro_factura por que no aporta en nada y no hay como llenarlo
 	descripcion varchar(50),
 	nro_cuota int,
 	total_cuotas int,
@@ -838,7 +838,7 @@ select * from gasto
 
 -----------INSERTAR GASTOS ORDINARIOS--------------------------------
 -------------------Versón juan act----------------------
-CREATE OR ALTER PROCEDURE spImportarGastosOrdinarios
+/*CREATE OR ALTER PROCEDURE spImportarGastosOrdinarios
     @RutaArchivoJson VARCHAR(255) -- Parámetro para la ruta del archivo JSON
 AS
 BEGIN
@@ -970,5 +970,110 @@ GO
 
 select *from gastoOrdinario
 DELETE FROM gastoOrdinario; 
+DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);*/
+
+CREATE OR ALTER PROCEDURE sp_gastos_ordinarios 
+    @RutaArchivoJSON NVARCHAR(4000)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    CREATE TABLE #gastoOrdinarioTemp (
+        nombre NVARCHAR(100),
+        mes NVARCHAR(20),
+        bancarios NVARCHAR(20),
+        limpieza NVARCHAR(20),
+        administracion NVARCHAR(20),
+        seguros NVARCHAR(20),
+        gastosGenerales NVARCHAR(20),
+        agua NVARCHAR(20),
+        luz NVARCHAR(20)
+    );
+
+    DECLARE @SQL NVARCHAR(MAX);
+    SET @SQL = N'
+    INSERT INTO #gastoOrdinarioTemp (nombre, mes, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
+    SELECT nombre, mes, bancarios, limpieza, administracion, seguros, generales, agua, luz
+    FROM OPENROWSET (BULK ''' + @RutaArchivoJSON + N''', SINGLE_CLOB) AS j
+    CROSS APPLY OPENJSON (BulkColumn)
+    WITH (
+        nombre NVARCHAR(100)  ''$."Nombre del consorcio"'',
+        mes NVARCHAR(20) ''$.Mes'',
+        bancarios NVARCHAR(20) ''$.BANCARIOS'',
+        limpieza NVARCHAR(20)  ''$.LIMPIEZA'',
+        administracion NVARCHAR(20)  ''$.ADMINISTRACION'',
+        seguros NVARCHAR(20) ''$.SEGUROS'',
+        generales NVARCHAR(20) ''$."GASTOS GENERALES"'',
+        agua NVARCHAR(20)  ''$."SERVICIOS PUBLICOS-Agua"'',
+        luz NVARCHAR(20)  ''$."SERVICIOS PUBLICOS-Luz"''
+    );';
+    EXEC sp_executesql @SQL;
+
+    SET LANGUAGE SPANISH;
+    DECLARE @ANO_ACTUAL NVARCHAR(4) = CAST(YEAR(GETDATE()) AS NVARCHAR);
+
+
+    INSERT INTO gastoOrdinario (id_gasto, id_consorcio, fecha_gasto, tipo_gasto, subtipoGasto, nombre_empresa, importe)
+    SELECT 
+        NULL AS id_gasto, 
+        c.id_consorcio,
+        EOMONTH(CONVERT(date, '01-' + t.mes + '-' + @ANO_ACTUAL, 105)) AS fecha_gasto,
+        CASE 
+            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN 'GASTOS BANCARIOS'
+            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN 'GASTOS DE ADMINISTRACION'
+            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN 'SEGUROS'
+            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN 'GASTOS DE LIMPIEZA'
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' THEN 'SERVICIOS PUBLICOS'
+            ELSE 'OTROS'
+        END AS tipo_gasto,
+        CASE 
+            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN 'GASTOS BANCARIOS'
+            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN 'HONORARIOS'
+            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN 'INTEGRAL DE CONSORCIO'
+            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN 'SERVICIO DE LIMPIEZA'
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%AYSA%' THEN 'SERVICIO DE AGUA'
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%EDENOR%' THEN 'SERVICIO DE ELECTRICIDAD'
+            ELSE 'OTROS'
+        END AS subtipoGasto,
+        UPPER(LTRIM(RTRIM(
+            CASE 
+                WHEN CHARINDEX('-', p.nombre_empresa) > 0 
+                    THEN LEFT(p.nombre_empresa, CHARINDEX('-', p.nombre_empresa) - 1)
+                ELSE p.nombre_empresa
+            END
+        ))) AS nombre_empresa,
+      
+        CASE 
+            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.bancarios, ',', ''), '.', '.'), ' ', '') AS decimal(10,2))
+            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.administracion, ',', ''), '.', '.'), ' ', '') AS decimal(10,4))
+            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.seguros, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
+            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.limpieza, ',', ''), '.', '.'), ' ', '') AS decimal(10,4))
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%AYSA%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.agua, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
+            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%EDENOR%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.luz, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
+            ELSE 0
+        END AS importe
+    FROM #gastoOrdinarioTemp t
+    INNER JOIN consorcio c 
+        ON UPPER(LTRIM(RTRIM(c.nombre))) = UPPER(LTRIM(RTRIM(t.nombre)))
+    INNER JOIN proveedor p 
+        ON c.id_consorcio = p.id_consorcio;
+
+
+    
+
+    DROP TABLE #gastoOrdinarioTemp;
+
+
+END
+GO
+
+--prueba
+DECLARE @archivo NVARCHAR(4000) = 'la ruta del .json';
+
+DELETE FROM gastoOrdinario;
 DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);
 
+EXEC sp_gastos_ordinarios @RutaArchivoJSON = @archivo;
+
+SELECT * FROM gastoOrdinario;
+GO
