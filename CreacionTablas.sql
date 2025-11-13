@@ -48,7 +48,8 @@ create table pago (
 	fecha date,
 	cuenta_origen varchar(50),
 	importe decimal(10,2),
-	asociado char(2) not null,);
+	asociado char(2) not null,
+    id_detalleDeCuenta int null);
 go
 
 create table consorcio (
@@ -178,10 +179,6 @@ create table gastoExtraordinario (
 	id_consorcio int,
 	tipo_gasto varchar(50),
 	fecha_gasto date,
-	--nombre_empresa varchar(50),
-	--nro_factura varchar(50),
-	nombre_empresa varchar(50),
-	--elimine nro_factura por que no aporta en nada y no hay como llenarlo
 	descripcion varchar(50),
 	forma_pago varchar(15),
 	cuota varchar(15),
@@ -192,6 +189,8 @@ create table gastoExtraordinario (
 	foreign key (id_consorcio) references consorcio (id_consorcio)
 	);
 go
+
+
 
 create table proveedor (  --Cambiar a "proveedor"
 	id_proveedor int identity(1,1) primary key,
@@ -447,87 +446,87 @@ SELECT * FROM unidadFuncional
 -- 2. El archivo de datos de Persona (Inquilino-propietarios-datos.csv)
 
 CREATE OR ALTER PROCEDURE sp_importar_persona_uf
-� � @RutaArchivoRelacionUF VARCHAR(255), �-- (delimitador '|')
-� � @RutaArchivoDatosPersona VARCHAR(255) -- (delimitador ';')
+ @RutaArchivoRelacionUF VARCHAR(255), -- (delimitador '|')
+ @RutaArchivoDatosPersona VARCHAR(255) -- (delimitador ';')
 AS
 BEGIN
-� � -- Tabla temporal para la relaci�n UF-CVU/CBU
-� � CREATE TABLE #tempRelacionUF (
-� � � � CVU_CBU VARCHAR(50),
-� � � � Nombre_Consorcio VARCHAR(35),
-� � � � nroUnidadFuncional VARCHAR(10),
-� � � � piso VARCHAR(10),
-� � � � departamento VARCHAR(10)
-� � );
+ -- Tabla temporal para la relaci�n UF-CVU/CBU
+ CREATE TABLE #tempRelacionUF (
+CVU_CBU VARCHAR(50),
+ Nombre_Consorcio VARCHAR(35),
+nroUnidadFuncional VARCHAR(10),
+ piso VARCHAR(10),
+ departamento VARCHAR(10)
+ );
 
-� � -- Tabla temporal para obtener el estado de inquilino y DNI a partir del CVU/CBU
-� � CREATE TABLE #tempPersonaStatus (
-� � � � Nombre VARCHAR(50),
-� � � � Apellido VARCHAR(50),
-� � � � DNI VARCHAR(9),
-� � � � Email_Personal VARCHAR(50),
-� � � � Telefono_Contacto VARCHAR(20),
-� � � � Cuenta VARCHAR(50), �
-� � � � Inquilino BIT � � � � 
-� � );
+-- Tabla temporal para obtener el estado de inquilino y DNI a partir del CVU/CBU
+CREATE TABLE #tempPersonaStatus (
+ Nombre VARCHAR(50),
+ Apellido VARCHAR(50),
+DNI VARCHAR(9),
+ Email_Personal VARCHAR(50),
+ Telefono_Contacto VARCHAR(20),
+Cuenta VARCHAR(50), 
+ Inquilino BIT 
+);
 
-� � DECLARE @sql_dinamico_uf NVARCHAR(MAX);
-� � DECLARE @sql_dinamico_per NVARCHAR(MAX);
+ DECLARE @sql_dinamico_uf NVARCHAR(MAX);
+ DECLARE @sql_dinamico_per NVARCHAR(MAX);
 
-� � -- BULK INSERT para la relaci�n UF-CVU/CBU (usando delimitador '|')
-� � SET @sql_dinamico_uf = �
-� � � � 'BULK INSERT #tempRelacionUF ' + �
-� � � � 'FROM ''' + @RutaArchivoRelacionUF + ''' ' + �
-� � � � 'WITH ( ' +
-� � � � � � 'FIELDTERMINATOR = ''|'', ' +
-� � � � � � 'ROWTERMINATOR = ''\n'', ' +
-� � � � � � 'FIRSTROW = 2 ' +
-� � � � ');';
-� � EXEC sp_executesql @sql_dinamico_uf;
+ -- BULK INSERT para la relaci�n UF-CVU/CBU (usando delimitador '|')
+ SET @sql_dinamico_uf = 
+'BULK INSERT #tempRelacionUF ' + 
+'FROM ''' + @RutaArchivoRelacionUF + ''' ' + 
+ 'WITH ( ' +
+ 'FIELDTERMINATOR = ''|'', ' +
+'ROWTERMINATOR = ''\n'', ' +
+'FIRSTROW = 2 ' +
+ ');';
+ EXEC sp_executesql @sql_dinamico_uf;
 
-� � -- BULK INSERT para el estado de Inquilino
-� � SET @sql_dinamico_per = �
-� � � � 'BULK INSERT #tempPersonaStatus ' + �
-� � � � 'FROM ''' + @RutaArchivoDatosPersona + ''' ' + �
-� � � � 'WITH ( ' +
-� � � � � � 'FIELDTERMINATOR = '';'', ' +
-� � � � � � 'ROWTERMINATOR = ''\n'', ' +
-� � � � � � 'FIRSTROW = 2 ' +
-� � � � ');';
-� � EXEC sp_executesql @sql_dinamico_per;
+ -- BULK INSERT para el estado de Inquilino
+ SET @sql_dinamico_per = 
+ 'BULK INSERT #tempPersonaStatus ' + 
+ 'FROM ''' + @RutaArchivoDatosPersona + ''' ' + 
+ 'WITH ( ' +
+'FIELDTERMINATOR = '';'', ' +
+'ROWTERMINATOR = ''\n'', ' +
+ 'FIRSTROW = 2 ' +
+');';
+ EXEC sp_executesql @sql_dinamico_per;
 
-� � -- Insertar en personaUf (JOIN m�ltiple)
-� � INSERT INTO personaUf (dni_persona, id_uf, fecha_desde, fecha_hasta, tipo_responsable)
-� � SELECT
-� � � � p.dni, 
-� � � � uf.id_uf,
-� � � � GETDATE() AS fecha_desde, -- Asumimos la fecha actual para la relaci�n (esto nose si es asi)
-� � � � NULL AS fecha_hasta,
-� � � � -- Inferimos el tipo de responsable usando la columna 'Inquilino'
-� � � � CASE WHEN tps.Inquilino = 1 THEN 'INQUILINO' ELSE 'PROPIETARIO' END AS tipo_responsable
-� � FROM
-� � � � #tempRelacionUF truf
-� � � � -- Unir con el estado de inquilino para obtener el DNI y el tipo de responsable
-� � � � INNER JOIN #tempPersonaStatus tps ON REPLACE(LTRIM(RTRIM(truf.CVU_CBU)), ' ', '') = REPLACE(LTRIM(RTRIM(tps.Cuenta)), ' ', '')
-� � � � -- Unir con la tabla Persona para asegurar la existencia del DNI
-� � � � INNER JOIN persona p ON p.dni = LTRIM(RTRIM(tps.DNI))
-� � � � -- Unir con la tabla Consorcio
-� � � � INNER JOIN consorcio c ON c.nombre = truf.Nombre_Consorcio
-� � � � -- Unir con la tabla Unidad Funcional para obtener el id_uf
-� � � � INNER JOIN unidadFuncional uf ON
-� � � � � � uf.id_consorcio = c.id_consorcio AND
-� � � � � � uf.numero_uf = CAST(truf.nroUnidadFuncional AS INT) AND
-� � � � � � uf.piso = truf.piso AND
-� � � � � � uf.depto = truf.departamento
-� � WHERE
-� � � � -- Evitar duplicados ya insertados (si se ejecuta el SP varias veces)
-� � � � NOT EXISTS (
-� � � � � � SELECT 1
-� � � � � � FROM personaUf pu
-� � � � � � WHERE pu.dni_persona = p.dni
-� � � � � � � � AND pu.id_uf = uf.id_uf
-� � � � � � � � AND pu.fecha_hasta IS NULL -- Solo consideramos las relaciones activas
-� � � � );
+ -- Insertar en personaUf (JOIN m�ltiple)
+ INSERT INTO personaUf (dni_persona, id_uf, fecha_desde, fecha_hasta, tipo_responsable)
+ SELECT
+p.dni, 
+ uf.id_uf,
+ GETDATE() AS fecha_desde, -- Asumimos la fecha actual para la relaci�n (esto nose si es asi)
+ NULL AS fecha_hasta,
+ -- Inferimos el tipo de responsable usando la columna 'Inquilino'
+ CASE WHEN tps.Inquilino = 1 THEN 'INQUILINO' ELSE 'PROPIETARIO' END AS tipo_responsable
+ FROM
+#tempRelacionUF truf
+ -- Unir con el estado de inquilino para obtener el DNI y el tipo de responsable
+ INNER JOIN #tempPersonaStatus tps ON REPLACE(LTRIM(RTRIM(truf.CVU_CBU)), ' ', '') = REPLACE(LTRIM(RTRIM(tps.Cuenta)), ' ', '')
+ -- Unir con la tabla Persona para asegurar la existencia del DNI
+ INNER JOIN persona p ON p.dni = LTRIM(RTRIM(tps.DNI))
+ -- Unir con la tabla Consorcio
+ INNER JOIN consorcio c ON c.nombre = truf.Nombre_Consorcio
+ -- Unir con la tabla Unidad Funcional para obtener el id_uf
+ INNER JOIN unidadFuncional uf ON
+ uf.id_consorcio = c.id_consorcio AND
+ uf.numero_uf = CAST(truf.nroUnidadFuncional AS INT) AND
+uf.piso = truf.piso AND
+ uf.depto = truf.departamento
+WHERE
+ -- Evitar duplicados ya insertados (si se ejecuta el SP varias veces)
+ NOT EXISTS (
+ SELECT 1
+ FROM personaUf pu
+ WHERE pu.dni_persona = p.dni
+ AND pu.id_uf = uf.id_uf
+ AND pu.fecha_hasta IS NULL -- Solo consideramos las relaciones activas
+);
 
 END;
 GO
@@ -536,7 +535,7 @@ GO
 DECLARE @archivo_relacion_uf VARCHAR(255) = ''; -- <---- RUTA Inquilino-propietarios-UF.csv
 DECLARE @archivo_datos_persona VARCHAR(255) = ''; -- <---- RUTA Inquilino-propietarios-datos.csv
 
-DELETE FROM personaUf;�
+DELETE FROM personaUf;
 DBCC CHECKIDENT ('personaUf', RESEED, 0);
 EXEC sp_importar_persona_uf 
  @RutaArchivoRelacionUF = @archivo_relacion_uf, 
@@ -548,62 +547,62 @@ GO
 -----------------------------------------------------
 -- CARGAR PAGO
 CREATE OR ALTER PROCEDURE sp_importar_pagos
-� � @RutaArchivoPagos VARCHAR(255)
+@RutaArchivoPagos VARCHAR(255)
 AS
 BEGIN
-� �
-� � CREATE TABLE #tempPago (
-� � � � Id_de_pago VARCHAR(10),
-� � � � fecha VARCHAR(20),
-� � � � CVU_CBU VARCHAR(50),
-� � � � Valor VARCHAR(30)
-� � );
 
-� � DECLARE @sql_dinamico_pagos NVARCHAR(MAX);
+ CREATE TABLE #tempPago (
+ Id_de_pago VARCHAR(10),
+ fecha VARCHAR(20),
+CVU_CBU VARCHAR(50),
+ Valor VARCHAR(30)
+ );
 
-� � -- Construir la instrucci�n BULK INSERT
-� � SET @sql_dinamico_pagos = �
-� � � � 'BULK INSERT #tempPago ' + �
-� � � � 'FROM ''' + @RutaArchivoPagos + ''' ' + �
-� � � � 'WITH ( ' +
-� � � � � � 'FIELDTERMINATOR = '','', ' + 
-� � � � � � 'ROWTERMINATOR = ''\n'', ' +
-� � � � � � 'FIRSTROW = 2 ' +
-� � � � ');';
+ DECLARE @sql_dinamico_pagos NVARCHAR(MAX);
 
-� � EXEC sp_executesql @sql_dinamico_pagos;
-� � -- Transformaciones de datos:
-� � --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
-� � --  Convertir la fecha a formato DATE.
-� �
+-- Construir la instrucci�n BULK INSERT
+SET @sql_dinamico_pagos = 
+'BULK INSERT #tempPago ' + 
+ 'FROM ''' + @RutaArchivoPagos + ''' ' + 
+'WITH ( ' +
+ 'FIELDTERMINATOR = '','', ' + 
+ 'ROWTERMINATOR = ''\n'', ' +
+ 'FIRSTROW = 2 ' +
+ ');';
 
-� � INSERT INTO pago (fecha, cuenta_origen, importe, asociado)
-� � SELECT
-� � � � TRY_CONVERT(DATE, t.fecha, 103), -- Formato 103: dd/mm/yyyy
-� � � � REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', ''),
-� � � � CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2)),
-� � � � 'NO' -- Valor por defecto. Se podr�a actualizar a 'SI' cuando se genere la Expensa/EstadoCuentaProrrateo (creo)
-� � FROM
-� � � � #tempPago t
-� � WHERE
-� � � � ISNUMERIC(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '')) = 1 �-- Solo importamos si el valor es num�rico v�lido
-� � � � AND TRY_CONVERT(DATE, t.fecha, 103) IS NOT NULL �-- Solo importamos si la fecha es v�lida
-� � � � -- Evitar duplicados (mismo CVU/CBU, misma fecha, mismo importe)
-� � � � AND NOT EXISTS (
-� � � � � � SELECT 1
-� � � � � � FROM pago p
-� � � � � � WHERE
-� � � � � � � � p.cuenta_origen = REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', '') AND
-� � � � � � � � p.fecha = TRY_CONVERT(DATE, t.fecha, 103) AND
-� � � � � � � � p.importe = CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2))
-� � � � );
+ EXEC sp_executesql @sql_dinamico_pagos;
+-- Transformaciones de datos:
+ --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
+ --  Convertir la fecha a formato DATE.
+
+
+ INSERT INTO pago (fecha, cuenta_origen, importe, asociado)
+SELECT
+TRY_CONVERT(DATE, t.fecha, 103), -- Formato 103: dd/mm/yyyy
+ REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', ''),
+CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2)),
+'NO' -- Valor por defecto. Se podr�a actualizar a 'SI' cuando se genere la Expensa/EstadoCuentaProrrateo (creo)
+ FROM
+ #tempPago t
+ WHERE
+ ISNUMERIC(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '')) = 1 -- Solo importamos si el valor es num�rico v�lido
+AND TRY_CONVERT(DATE, t.fecha, 103) IS NOT NULL -- Solo importamos si la fecha es v�lida
+ -- Evitar duplicados (mismo CVU/CBU, misma fecha, mismo importe)
+AND NOT EXISTS (
+ SELECT 1
+ FROM pago p
+WHERE
+p.cuenta_origen = REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', '') AND
+ p.fecha = TRY_CONVERT(DATE, t.fecha, 103) AND
+ p.importe = CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2))
+ );
 
 END;
 GO
 
 -----------------------Ejecuci�n---------------------- 
 DECLARE @archivo_pagos VARCHAR(255) = ''; -- <---- RUTA pagos_consorcios.csv
-DELETE FROM pago;�
+DELETE FROM pago;
 DBCC CHECKIDENT ('pago', RESEED, 0);
 EXEC sp_importar_pagos @RutaArchivoPagos = @archivo_pagos;
 SELECT * FROM pago;
@@ -611,45 +610,44 @@ GO
 ---------------------------------------------------
 -- IMPORTAR PROVEEDORES
 CREATE OR ALTER PROCEDURE sp_importar_proveedores
-� � @RutaArchivoProveedores VARCHAR(255)
+ @RutaArchivoProveedores VARCHAR(255)
 AS
 BEGIN
-� �
-� � CREATE TABLE #tempProveedor (
+ CREATE TABLE #tempProveedor (
 		tipo_gasto varchar(50),
 		nombre_empresa varchar(100),
 		alias varchar(50),
 		nombre_consorcio varchar(50)
-� � );
+ );
 
-� � DECLARE @sql_dinamico_proveedores NVARCHAR(MAX);
+ DECLARE @sql_dinamico_proveedores NVARCHAR(MAX);
 
-� � -- Construir la instrucci�n BULK INSERT
-� � SET @sql_dinamico_proveedores = �
-� � � � 'BULK INSERT #tempProveedor ' + �
-� � � � 'FROM ''' + @RutaArchivoProveedores + ''' ' + �
-� � � � 'WITH ( ' +
-� � � � � � 'FIELDTERMINATOR = '';'', ' +
+ -- Construir la instrucci�n BULK INSERT
+ SET @sql_dinamico_proveedores = 
+ 'BULK INSERT #tempProveedor ' + 
+'FROM ''' + @RutaArchivoProveedores + ''' ' + 
+ 'WITH ( ' +
+ 'FIELDTERMINATOR = '';'', ' +
             'ROWTERMINATOR = ''\n'', ' +
             'FIRSTROW = 2 ' +
-� � � � ');';
+');';
 
-� � EXEC sp_executesql @sql_dinamico_proveedores;
-� � -- Transformaciones de datos:
-� � --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
-� � --  Convertir la fecha a formato DATE.
-� �
+ EXEC sp_executesql @sql_dinamico_proveedores;
+ -- Transformaciones de datos:
+ --  Eliminar '$', espacios y reemplazar '.' por '' para convertir a DECIMAL.
+--  Convertir la fecha a formato DATE.
 
-� � INSERT INTO proveedor (id_consorcio, tipo_gasto, nombre_empresa, alias)
-� � SELECT 
+
+ INSERT INTO proveedor (id_consorcio, tipo_gasto, nombre_empresa, alias)
+ SELECT 
 		c.id_consorcio, p.tipo_gasto, p.nombre_empresa, p.alias
-� � FROM
+    FROM
 		consorcio c INNER JOIN #tempProveedor p ON c.nombre = p.nombre_consorcio
 END;
 GO
 --------------EJECUCION-------------------
 DECLARE @archivo_provedores VARCHAR(255) = ''; -- <---- RUTA datos varios 1(Proveedores).csv
-DELETE FROM proveedor;�
+DELETE FROM proveedor;
 DBCC CHECKIDENT ('proveedor', RESEED, 0);
 EXEC sp_importar_proveedores @RutaArchivoProveedores = @archivo_provedores;
 SELECT * FROM proveedor;
@@ -841,153 +839,15 @@ DELETE FROM gasto;�
 DBCC CHECKIDENT ('gasto', RESEED, 0);
 
 
------------INSERTAR GASTOS ORDINARIOS--------------------------------
--------------------Vers�n juan act----------------------
-/*CREATE OR ALTER PROCEDURE spImportarGastosOrdinarios
-    @RutaArchivoJson VARCHAR(255) -- Par�metro para la ruta del archivo JSON
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    -- Variables para SQL Din�mico y el contenido del JSON
-    DECLARE @sql_dinamico NVARCHAR(MAX);
-    DECLARE @JsonData NVARCHAR(MAX); 
-
-    -- [SECCI�N 1: EXTRACT (Lectura del Archivo)]
-    SET @sql_dinamico = 
-        'SELECT @JsonData = BulkColumn FROM OPENROWSET(BULK ''' + @RutaArchivoJson + ''', SINGLE_CLOB) AS J;';
-    
-    EXEC sp_executesql 
-        @stmt = @sql_dinamico, 
-        @param = N'@JsonData NVARCHAR(MAX) OUTPUT', 
-        @JsonData = @JsonData OUTPUT;
-
-    IF @JsonData IS NULL OR @JsonData = ''
-    BEGIN
-        RAISERROR('Error: No se pudo leer el archivo JSON o est� vac�o.', 16, 1);
-        RETURN -1;
-    END
-
-    -- [SECCI�N 2: TRANSFORM & LOAD]
-    
-    BEGIN TRY
-        
-        WITH JsonGastosAplanados AS (
-            SELECT
-                JSON_VALUE(j.value, '$."Nombre del consorcio"') AS NombreConsorcio,
-                TRIM(JSON_VALUE(j.value, '$.Mes')) AS Mes,
-                GastoData.[key] AS TipoGastoJson,
-                
-                -- ***************************************************************
-                -- SOLUCI�N FINAL A TRUNCAMIENTO Y FORMATO REGIONAL (TRY_PARSE)
-                -- ***************************************************************
-                TRY_PARSE(
-                    TRIM(GastoData.value) -- Limpiamos solo espacios externos
-                    AS DECIMAL(18, 2) USING 'es-ES' -- Usa el formato Espa�ol (punto=miles, coma=decimal)
-                ) AS Importe_Decimal
-                
-            FROM 
-                OPENJSON(@JsonData) j 
-            CROSS APPLY 
-                OPENJSON(j.value) AS GastoData
-            WHERE
-                GastoData.[key] NOT IN ('_id', 'Nombre del consorcio', 'Mes')
-                AND JSON_VALUE(j.value, '$."Nombre del consorcio"') IS NOT NULL
-        ),
-        
-        -- Mapear el Mes a su formato YYYY-MM
-        Meses AS (
-            SELECT 'abril' AS nombre, '04' AS num UNION ALL SELECT 'mayo', '05' UNION ALL 
-            SELECT 'junio', '06' AS num
-        )
-        
-        INSERT INTO gastoOrdinario(
-            id_gasto, 
-            tipo_gasto, 
-            nombre_empresa,
-            importe
-        )
-        SELECT
-            g.id_gasto,
-            UPPER(j.TipoGastoJson), 
-            p.nombre_empresa,
-            j.Importe_Decimal
-        FROM 
-            JsonGastosAplanados j
-        INNER JOIN 
-            consorcio c ON UPPER(c.nombre) = UPPER(j.NombreConsorcio COLLATE Modern_Spanish_CI_AS)
-        INNER JOIN 
-            Meses m ON LOWER(m.nombre) = LOWER(j.Mes COLLATE Modern_Spanish_CI_AS)
-        INNER JOIN 
-            expensa e ON e.id_consorcio = c.id_consorcio 
-                         AND e.periodo = CONCAT('2025-', m.num)
-        INNER JOIN 
-            Gasto g ON g.id_expensa = e.id_expensa
-        LEFT JOIN
-            proveedor p ON p.id_consorcio = c.id_consorcio
-                           AND p.tipo_gasto = (
-                               CASE UPPER(j.TipoGastoJson) COLLATE Modern_Spanish_CI_AS
-                                   WHEN 'BANCARIOS' THEN 'GASTOS BANCARIOS' COLLATE Modern_Spanish_CI_AS
-                                   -- ... (resto de CASE para mapeo de tipo_gasto)
-                                   WHEN 'ADMINISTRACION' THEN 'GASTOS DE ADMINISTRACION' COLLATE Modern_Spanish_CI_AS
-                                   WHEN 'LIMPIEZA' THEN 'GASTOS DE LIMPIEZA' COLLATE Modern_Spanish_CI_AS
-                                   WHEN 'SEGUROS' THEN 'SEGUROS' COLLATE Modern_Spanish_CI_AS
-                                   WHEN 'GASTOS GENERALES' THEN 'GASTOS GENERALES' COLLATE Modern_Spanish_CI_AS
-                                   WHEN 'SERVICIOS PUBLICOS-AGUA' THEN 'SERVICIOS PUBLICOS' COLLATE Modern_Spanish_CI_AS
-                                   WHEN 'SERVICIOS PUBLICOS-LUZ' THEN 'SERVICIOS PUBLICOS' COLLATE Modern_Spanish_CI_AS
-                                   ELSE UPPER(j.TipoGastoJson) COLLATE Modern_Spanish_CI_AS
-                               END
-                           )
-                           AND (
-                               (UPPER(j.TipoGastoJson COLLATE Modern_Spanish_CI_AS) = 'SERVICIOS PUBLICOS-AGUA' AND UPPER(p.nombre_empresa) = 'AYSA')
-                               OR (UPPER(j.TipoGastoJson COLLATE Modern_Spanish_CI_AS) = 'SERVICIOS PUBLICOS-LUZ' AND UPPER(p.nombre_empresa) = 'EDENOR')
-                               OR (UPPER(j.TipoGastoJson COLLATE Modern_Spanish_CI_AS) NOT LIKE 'SERVICIOS PUBLICOS%')
-                           )
-
-        WHERE
-            j.Importe_Decimal IS NOT NULL -- Filtra los valores que no se pudieron parsear
-            AND j.Importe_Decimal > 0 
-            AND NOT EXISTS (
-                SELECT 1
-                FROM gastoOrdinario go_exist
-                WHERE go_exist.id_gasto = g.id_gasto
-                  AND go_exist.tipo_gasto = UPPER(j.TipoGastoJson COLLATE Modern_Spanish_CI_AS)
-            );
-            
-        PRINT 'Carga de Gastos Ordinarios completada. Se insertaron ' + CAST(@@ROWCOUNT AS VARCHAR) + ' registros.';
-        
-    END TRY
-    BEGIN CATCH
-        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
-        RAISERROR('Error al cargar Gastos Ordinarios desde JSON: %s', 16, 1, @ErrorMessage);
-        RETURN -4;
-    END CATCH
-
-END;
-GO
-
-
-
--- 1. Declarar la variable para la ruta del JSON
-DECLARE @RutaJson VARCHAR(255) = ''; -- <--- �ACTUALIZA ESTO!
--- 2. Ejecutar el Stored Procedure
-EXEC spImportarGastosOrdinarios @RutaArchivoJson = @RutaJson;
-GO
-
-select * from gastoOrdinario
-
-DELETE FROM gastoOrdinario;�
-DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);*/
-
-CREATE OR ALTER PROCEDURE sp_gastos_ordinarios 
+CREATE OR ALTER PROCEDURE sp_gastos_ordinarios
     @RutaArchivoJSON NVARCHAR(4000)
 AS
 BEGIN
     SET NOCOUNT ON;
 
     CREATE TABLE #gastoOrdinarioTemp (
-        nombre NVARCHAR(100),
-        mes NVARCHAR(20),
+        nombreConsorcio NVARCHAR(100),
+        mes_nombre NVARCHAR(20),
         bancarios NVARCHAR(20),
         limpieza NVARCHAR(20),
         administracion NVARCHAR(20),
@@ -997,85 +857,140 @@ BEGIN
         luz NVARCHAR(20)
     );
 
+    -- 2. Lectura del JSON a la tabla temporal (Pivoteada)
     DECLARE @SQL NVARCHAR(MAX);
     SET @SQL = N'
-    INSERT INTO #gastoOrdinarioTemp (nombre, mes, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
-    SELECT nombre, mes, bancarios, limpieza, administracion, seguros, generales, agua, luz
-    FROM OPENROWSET (BULK ''' + @RutaArchivoJSON + N''', SINGLE_CLOB) AS j
-    CROSS APPLY OPENJSON (BulkColumn)
-    WITH (
-        nombre NVARCHAR(100)  ''$."Nombre del consorcio"'',
-        mes NVARCHAR(20) ''$.Mes'',
-        bancarios NVARCHAR(20) ''$.BANCARIOS'',
-        limpieza NVARCHAR(20)  ''$.LIMPIEZA'',
-        administracion NVARCHAR(20)  ''$.ADMINISTRACION'',
-        seguros NVARCHAR(20) ''$.SEGUROS'',
-        generales NVARCHAR(20) ''$."GASTOS GENERALES"'',
-        agua NVARCHAR(20)  ''$."SERVICIOS PUBLICOS-Agua"'',
-        luz NVARCHAR(20)  ''$."SERVICIOS PUBLICOS-Luz"''
-    );';
-    EXEC sp_executesql @SQL;
-
-    SET LANGUAGE SPANISH;
-    DECLARE @ANO_ACTUAL NVARCHAR(4) = CAST(YEAR(GETDATE()) AS NVARCHAR);
-
-
-    INSERT INTO gastoOrdinario (id_gasto, id_consorcio, fecha_gasto, tipo_gasto, subtipoGasto, nombre_empresa, importe)
+    INSERT INTO #gastoOrdinarioTemp (nombreConsorcio, mes_nombre, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
     SELECT 
-        NULL AS id_gasto, 
-        c.id_consorcio,
-        EOMONTH(CONVERT(date, '01-' + t.mes + '-' + @ANO_ACTUAL, 105)) AS fecha_gasto,
-        CASE 
-            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN 'GASTOS BANCARIOS'
-            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN 'GASTOS DE ADMINISTRACION'
-            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN 'SEGUROS'
-            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN 'GASTOS DE LIMPIEZA'
-            WHEN p.tipo_gasto LIKE '%SERVICIO%' THEN 'SERVICIOS PUBLICOS'
-            ELSE 'OTROS'
-        END AS tipo_gasto,
-        CASE 
-            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN 'GASTOS BANCARIOS'
-            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN 'HONORARIOS'
-            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN 'INTEGRAL DE CONSORCIO'
-            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN 'SERVICIO DE LIMPIEZA'
-            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%AYSA%' THEN 'SERVICIO DE AGUA'
-            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%EDENOR%' THEN 'SERVICIO DE ELECTRICIDAD'
-            ELSE 'OTROS'
-        END AS subtipoGasto,
-        UPPER(LTRIM(RTRIM(
-            CASE 
-                WHEN CHARINDEX('-', p.nombre_empresa) > 0 
-                    THEN LEFT(p.nombre_empresa, CHARINDEX('-', p.nombre_empresa) - 1)
-                ELSE p.nombre_empresa
-            END
-        ))) AS nombre_empresa,
-      
-        CASE 
-            WHEN p.tipo_gasto LIKE '%BANCARIO%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.bancarios, ',', ''), '.', '.'), ' ', '') AS decimal(10,2))
-            WHEN p.tipo_gasto LIKE '%ADMINISTRACION%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.administracion, ',', ''), '.', '.'), ' ', '') AS decimal(10,4))
-            WHEN p.tipo_gasto LIKE '%SEGURO%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.seguros, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
-            WHEN p.tipo_gasto LIKE '%LIMPIEZA%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.limpieza, ',', ''), '.', '.'), ' ', '') AS decimal(10,4))
-            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%AYSA%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.agua, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
-            WHEN p.tipo_gasto LIKE '%SERVICIO%' AND p.nombre_empresa LIKE '%EDENOR%' THEN TRY_CAST(REPLACE(REPLACE(REPLACE(t.luz, '.', ''), ',', '.'), ' ', '') AS decimal(10,4))
-            ELSE 0
-        END AS importe
-    FROM #gastoOrdinarioTemp t
-    INNER JOIN consorcio c 
-        ON UPPER(LTRIM(RTRIM(c.nombre))) = UPPER(LTRIM(RTRIM(t.nombre)))
-    INNER JOIN proveedor p 
-        ON c.id_consorcio = p.id_consorcio;
-
-
+        j."Nombre del consorcio", 
+        TRIM(j.Mes),
+        j.BANCARIOS, j.LIMPIEZA, j.ADMINISTRACION, j.SEGUROS, j."GASTOS GENERALES", 
+        j."SERVICIOS PUBLICOS-Agua", j."SERVICIOS PUBLICOS-Luz"
+    FROM OPENROWSET (BULK ''' + @RutaArchivoJSON + N''', SINGLE_CLOB) AS JData
+    CROSS APPLY OPENJSON (JData.BulkColumn)
+    WITH (
+        "Nombre del consorcio" NVARCHAR(100) ''$."Nombre del consorcio"'',
+        Mes NVARCHAR(20) ''$.Mes'',
+        BANCARIOS NVARCHAR(20) ''$.BANCARIOS'',
+        LIMPIEZA NVARCHAR(20)  ''$.LIMPIEZA'',
+        ADMINISTRACION NVARCHAR(20)  ''$.ADMINISTRACION'',
+        SEGUROS NVARCHAR(20) ''$.SEGUROS'',
+        "GASTOS GENERALES" NVARCHAR(20) ''$."GASTOS GENERALES"'',
+        "SERVICIOS PUBLICOS-Agua" NVARCHAR(20)  ''$."SERVICIOS PUBLICOS-Agua"'',
+        "SERVICIOS PUBLICOS-Luz" NVARCHAR(20)  ''$."SERVICIOS PUBLICOS-Luz"''
+    ) AS j
+    WHERE j."Nombre del consorcio" IS NOT NULL;
+    ';
+    EXEC sp_executesql @SQL;
     
+    -- [Definición de CTEs Meses y MapeoGastos]
+    WITH Meses AS (
+        SELECT 'abril' AS nombre, '04' AS num UNION ALL SELECT 'mayo', '05' AS num UNION ALL 
+        SELECT 'junio', '06' AS num UNION ALL SELECT 'julio', '07' AS num UNION ALL 
+        SELECT 'agosto', '08' AS num UNION ALL SELECT 'septiembre', '09' AS num UNION ALL 
+        SELECT 'octubre', '10' AS num UNION ALL SELECT 'noviembre', '11' AS num UNION ALL 
+        SELECT 'diciembre', '12' AS num UNION ALL SELECT 'enero', '01' AS num UNION ALL 
+        SELECT 'febrero', '02' AS num UNION ALL SELECT 'marzo', '03' AS num
+    ),
 
+    MapeoGastos AS ( 
+        -- Paso 1: Aplanar la tabla temporal (UNPIVOT LÓGICO)
+        SELECT 
+            c.id_consorcio,
+            g.id_gasto,
+            TRIM(t.mes_nombre) AS Mes,
+            CAST(YEAR(GETDATE()) AS INT) AS Anio,
+            pvt.TipoGastoCorto,
+            pvt.ImporteString
+        FROM #gastoOrdinarioTemp t
+        INNER JOIN consorcio c ON UPPER(TRIM(c.nombre)) = UPPER(TRIM(t.nombreConsorcio))
+        INNER JOIN (
+            -- UNPIVOT: Convierte las columnas de gasto en filas
+            SELECT nombreConsorcio, mes_nombre, 'BANCARIOS' AS TipoGastoCorto, bancarios AS ImporteString FROM #gastoOrdinarioTemp
+            UNION ALL SELECT nombreConsorcio, mes_nombre, 'LIMPIEZA', limpieza FROM #gastoOrdinarioTemp
+            UNION ALL SELECT nombreConsorcio, mes_nombre, 'ADMINISTRACION', administracion FROM #gastoOrdinarioTemp
+            UNION ALL SELECT nombreConsorcio, mes_nombre, 'SEGUROS', seguros FROM #gastoOrdinarioTemp
+            UNION ALL SELECT nombreConsorcio, mes_nombre, 'G.GENERALES', gastosGenerales FROM #gastoOrdinarioTemp
+            UNION ALL SELECT nombreConsorcio, mes_nombre, 'AGUA', agua FROM #gastoOrdinarioTemp
+            UNION ALL SELECT nombreConsorcio, mes_nombre, 'LUZ', luz FROM #gastoOrdinarioTemp
+        ) AS pvt ON pvt.nombreConsorcio = t.nombreConsorcio AND pvt.mes_nombre = t.mes_nombre
+        INNER JOIN Meses m ON LOWER(m.nombre) = LOWER(TRIM(t.mes_nombre))
+        INNER JOIN expensa e ON e.id_consorcio = c.id_consorcio 
+                             AND e.periodo = CONCAT(CAST(YEAR(GETDATE()) AS NVARCHAR), '-', m.num)
+        INNER JOIN Gasto g ON g.id_expensa = e.id_expensa
+    ),
+    
+    -- Paso 2: Mapear a Proveedor y Aplicar Lógica de Negocio
+    FinalData AS (
+        SELECT
+            m.id_gasto,
+            -- Tipos de Gasto...
+            CASE m.TipoGastoCorto WHEN 'BANCARIOS' THEN 'GASTOS BANCARIOS' WHEN 'ADMINISTRACION' THEN 'GASTOS DE ADMINISTRACION' WHEN 'SEGUROS' THEN 'SEGUROS' WHEN 'LIMPIEZA' THEN 'GASTOS DE LIMPIEZA' WHEN 'G.GENERALES' THEN 'GASTOS GENERALES' WHEN 'AGUA' THEN 'SERVICIOS PUBLICOS' WHEN 'LUZ' THEN 'SERVICIOS PUBLICOS' ELSE 'OTROS' END AS tipo_gasto,
+            -- Subtipos de Gasto...
+            CASE m.TipoGastoCorto WHEN 'BANCARIOS' THEN 'GASTOS BANCARIOS' WHEN 'ADMINISTRACION' THEN 'HONORARIOS' WHEN 'SEGUROS' THEN 'INTEGRAL DE CONSORCIO' WHEN 'LIMPIEZA' THEN 'SERVICIO DE LIMPIEZA' WHEN 'AGUA' THEN 'SERVICIO DE AGUA' WHEN 'LUZ' THEN 'SERVICIO DE ELECTRICIDAD' ELSE NULL END AS subtipoGasto,
+            
+            p.nombre_empresa,
+            
+            -- ***************************************************************
+            -- CONVERSIÓN EXTREMA: Eliminar todos los separadores de miles y estandarizar la coma decimal
+            -- ***************************************************************
+            TRY_CAST(
+                REPLACE(
+                    REPLACE( -- 2. Reemplazamos las comas (posibles separadores decimales) por puntos
+                        REPLACE(TRIM(m.ImporteString), '.', ''), -- 1. Primero, eliminamos todos los puntos (asumidos separadores de miles)
+                    ',', '.'),
+                ' ', '') -- 3. Eliminamos cualquier espacio residual que pueda causar error
+            AS DECIMAL(18, 2)) AS importe
+            
+        FROM MapeoGastos m
+        -- LEFT JOIN a Proveedor
+        LEFT JOIN proveedor p
+            ON p.id_consorcio = m.id_consorcio
+            -- 1. Mapeo del Tipo Gasto a la categoría de la tabla 'proveedor'
+            AND p.tipo_gasto = (
+                CASE m.TipoGastoCorto
+                    WHEN 'AGUA' THEN 'SERVICIOS PUBLICOS'
+                    WHEN 'LUZ' THEN 'SERVICIOS PUBLICOS'
+                    WHEN 'BANCARIOS' THEN 'GASTOS BANCARIOS'
+                    WHEN 'ADMINISTRACION' THEN 'GASTOS DE ADMINISTRACION'
+                    WHEN 'LIMPIEZA' THEN 'GASTOS DE LIMPIEZA'
+                    WHEN 'SEGUROS' THEN 'SEGUROS'
+                    WHEN 'G.GENERALES' THEN 'GASTOS GENERALES'
+                    ELSE 'OTROS'
+                END
+            )
+            -- 2. Discriminación de Proveedor (AYSA/EDENOR)
+            AND (
+                (m.TipoGastoCorto = 'AGUA' AND p.nombre_empresa = 'AYSA')
+                OR (m.TipoGastoCorto = 'LUZ' AND p.nombre_empresa = 'EDENOR')
+                OR (m.TipoGastoCorto NOT IN ('AGUA', 'LUZ'))
+            )
+    )
+
+    -- 4. Inserción Final
+    INSERT INTO gastoOrdinario (id_gasto, tipo_gasto, subtipoGasto, nombre_empresa, importe)
+    SELECT
+        fd.id_gasto,
+        fd.tipo_gasto,
+        fd.subtipoGasto,
+        fd.nombre_empresa,
+        fd.importe
+    FROM FinalData fd
+    WHERE
+        fd.importe IS NOT NULL
+        AND fd.importe > 0
+        AND fd.id_gasto IS NOT NULL;
+
+    -- 5. Limpieza y Mensaje
     DROP TABLE #gastoOrdinarioTemp;
-
+    
+    PRINT 'Carga de Gastos Ordinarios completada. Se insertaron ' + CAST(@@ROWCOUNT AS VARCHAR) + ' registros.';
 
 END
 GO
 
 --prueba
-DECLARE @archivo NVARCHAR(4000) = 'la ruta del .json';
+DECLARE @archivo NVARCHAR(4000) = '';
 
 DELETE FROM gastoOrdinario;
 DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);
@@ -1084,6 +999,10 @@ EXEC sp_gastos_ordinarios @RutaArchivoJSON = @archivo;
 
 SELECT * FROM gastoOrdinario;
 GO
+
+
+
+
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 --CARGAR GASTOS EXTRAORDINARIOS CON SQL DIN�MICO PARA LA RUTA DE ACCESO
@@ -1137,8 +1056,7 @@ GO
 -- Ejemplo de ejecuci�n (debe estar en el script de testing/invocaciones)
 DECLARE @archivo_gastosExtraordinarios VARCHAR(255) = ''; --<----RUTA DE ACCESO a gastos_extraordinarios.csv
 
--- Restablece el IDENTITY para la prueba
-DELETE FROM gastoExtraordinario; 
+DELETE FROM gastoExtraordinario;
 DBCC CHECKIDENT ('gastoExtraordinario', RESEED, 0);
 
 -- Ejecuta el SP pasando la variable con la ruta del archivo
@@ -1150,8 +1068,75 @@ order by id_consorcio
 GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 
+CREATE OR ALTER PROCEDURE sp_calcularSubtotalesGastos
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    -- FIX: Se combinan ambas CTEs en una única cláusula WITH, separadas por coma.
+    WITH SubtotalesOrdinarios AS (
+        SELECT
+            go.id_gasto,
+            SUM(go.importe) AS TotalOrdinario
+        FROM
+            gastoOrdinario go
+        GROUP BY
+            go.id_gasto
+    ), -- <--- ¡LA COMA ES ESENCIAL AQUÍ!
+    
+    SubtotalesExtraordinarios AS (
+        SELECT
+            ge.id_gasto,
+            SUM(ge.importe) AS TotalExtraordinario
+        FROM
+            gastoExtraordinario ge
+        GROUP BY
+            ge.id_gasto
+    ) -- No lleva coma porque le sigue la instrucción principal (UPDATE)
 
+    -- Realizar la actualización masiva de la tabla 'gasto'
+    UPDATE g
+    SET 
+        g.subtotal_ordinarios = ISNULL(so.TotalOrdinario, 0),
+        g.subtotal_extraordinarios = ISNULL(se.TotalExtraordinario, 0)
+    FROM
+        gasto g
+    LEFT JOIN
+        SubtotalesOrdinarios so ON g.id_gasto = so.id_gasto
+    LEFT JOIN
+        SubtotalesExtraordinarios se ON g.id_gasto = se.id_gasto
+    WHERE 
+        -- Condición para asegurar que solo se actualizan registros que realmente han cambiado
+        g.subtotal_ordinarios IS NULL 
+        OR g.subtotal_extraordinarios IS NULL 
+        OR g.subtotal_ordinarios <> ISNULL(so.TotalOrdinario, 0)
+        OR g.subtotal_extraordinarios <> ISNULL(se.TotalExtraordinario, 0);
 
+    -- Mensaje de éxito
+    PRINT 'Actualización de subtotales de gastos completada. ' + CAST(@@ROWCOUNT AS VARCHAR) + ' registros actualizados.';
+    RETURN 0;
 
+END;
+GO
+
+-- 1. Ejecutar el Stored Procedure
+EXEC sp_calcularSubtotalesGastos;
+GO
+
+select * from gasto
+-- 2. Verificación de Resultados
+-- Muestra el IdGasto, la suma de los detalles y el subtotal actualizado.
+SELECT
+    g.id_gasto,
+    g.subtotal_ordinarios AS Calculado_Ordinario,
+    g.subtotal_extraordinarios AS Calculado_Extraordinario,
+    (SELECT SUM(importe) FROM gastoOrdinario gu WHERE gu.id_gasto = g.id_gasto) AS Suma_Detalle_Ordinario,
+    (SELECT SUM(importe) FROM gastoExtraordinario ge WHERE ge.id_gasto = g.id_gasto) AS Suma_Detalle_Extraordinario
+FROM 
+    gasto g
+WHERE 
+    g.subtotal_ordinarios IS NOT NULL OR g.subtotal_extraordinarios IS NOT NULL
+ORDER BY
+    g.id_gasto;
+GO
 
