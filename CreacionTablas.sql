@@ -50,7 +50,7 @@ create table pago (
 	importe decimal(10,2),
 	asociado char(2) not null,
     id_detalleDeCuenta int null);
-go
+go 
 
 create table consorcio (
 	id_consorcio int identity(1,1) primary key,
@@ -135,7 +135,7 @@ go
 -- lo mismo con el tipo de dato periodo
 
 create table estadoCuentaProrrateo (
-	id_detalleDeCuenta int primary key,
+	id_detalleDeCuenta int identity (1,1) primary key,
 	id_expensa int,
 	id_uf int,
 	id_pago int,
@@ -155,7 +155,7 @@ create table estadoCuentaProrrateo (
 	foreign key (id_uf) references unidadFuncional (id_uf),
 	constraint fk_estadoCuentaProrrateo_id_pago
 	foreign key (id_pago) references pago (id_pago));
-go
+go  
 
 --subtipo gasto es por si es de limpieza
 --nrofactura lo cambie a int
@@ -438,6 +438,7 @@ GO
 DECLARE @RutaArchivoC VARCHAR(255) = '';--<----RUTA DE ACCESO Inquilino-propietarios-UF.csv
 EXEC sp_asociar_cuentas_uf @RutaArchivoCuentas = @RutaArchivoC;
 SELECT * FROM unidadFuncional
+GO
 --------------------------------------------------------------
 
 -- CARGAR personaUF
@@ -736,7 +737,7 @@ END;
 GO
 
 -- 1. Declarar variables para los par�metros
-DECLARE @periodo_mes_test VARCHAR(12) = 'Junio'; -- El mes que quieres generar (Abril, Mayo, Junio)
+DECLARE @periodo_mes_test VARCHAR(12) = 'Mayo'; -- El mes que quieres generar (Abril, Mayo, Junio)
 DECLARE @anio_test INT = 2025;             -- El a�o
 
 -- 2. Ejecutar el Stored Procedure
@@ -767,9 +768,9 @@ GO
 select * from expensa
 order by id_consorcio
 
-DELETE FROM expensa;�
+DELETE FROM expensa;
 DBCC CHECKIDENT ('expensa', RESEED, 0);
-
+GO
 -----------------------INSERTAR GASTOS------------------------------
 CREATE OR ALTER PROCEDURE spGenerarGastos
 AS
@@ -835,7 +836,7 @@ FROM gasto
 ORDER BY id_gasto DESC;
 GO
 
-DELETE FROM gasto;�
+DELETE FROM gasto;
 DBCC CHECKIDENT ('gasto', RESEED, 0);
 
 
@@ -1139,4 +1140,291 @@ WHERE
 ORDER BY
     g.id_gasto;
 GO
+---------------- ESTADO CUENTA PRORRATEO -----------------------
+CREATE OR ALTER PROCEDURE sp_generar_estadoCuentaProrrateo
+    @periodo_mes VARCHAR(12),
+    @anio INT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    DECLARE @periodo_completo VARCHAR(10);
+    DECLARE @periodo_anterior VARCHAR(10);
+    DECLARE @fecha_emision DATE;
+    DECLARE @fecha_1er_venc DATE;
+    DECLARE @fecha_2do_venc DATE;
+    DECLARE @periodo_fecha DATE;
+
+    -- Validar y construir el período (AAAA-MM) y el período anterior
+    SELECT @periodo_completo = CONCAT(@anio, '-', M.num)
+    FROM (
+        SELECT 'enero' AS nombre, '01' AS num UNION ALL SELECT 'febrero', '02' UNION ALL SELECT 'marzo', '03' UNION ALL SELECT 'abril', '04' UNION ALL
+        SELECT 'mayo', '05' UNION ALL SELECT 'junio', '06' UNION ALL SELECT 'julio', '07' UNION ALL SELECT 'agosto', '08' UNION ALL
+        SELECT 'septiembre', '09' UNION ALL SELECT 'octubre', '10' UNION ALL SELECT 'noviembre', '11' UNION ALL SELECT 'diciembre', '12'
+    ) AS M
+    WHERE LOWER(M.nombre) = LOWER(@periodo_mes);
+
+    IF @periodo_completo IS NULL
+    BEGIN
+        PRINT 'ERROR: Período de mes no válido.';
+        RETURN;
+    END
+
+    -- Calcular el periodo anterior en formato AAAA-MM
+    SET @periodo_fecha = CONVERT(DATE, @periodo_completo + '-01');
+    SET @periodo_anterior = CONVERT(VARCHAR(7), DATEADD(MONTH, -1, @periodo_fecha), 126);
+
+    -- Definir fechas de emisión y vencimiento
+    SET @fecha_emision = DATEADD(DAY, 1, @periodo_fecha); 
+    SET @fecha_1er_venc = DATEADD(DAY, 10, @fecha_emision);
+    SET @fecha_2do_venc = DATEADD(DAY, 20, @fecha_emision);
+
+    -- Calcular Prorrateo y Saldo Anterior
+    WITH DatosExpensa AS (
+        SELECT
+            e.id_expensa, uf.id_uf, g.subtotal_ordinarios, g.subtotal_extraordinarios, uf.coeficiente,
+            e.id_consorcio
+        FROM expensa e
+        INNER JOIN gasto g ON e.id_expensa = g.id_expensa
+        INNER JOIN unidadFuncional uf ON e.id_consorcio = uf.id_consorcio
+        WHERE e.periodo = @periodo_completo -- FILTRA por 'AAAA-MM'
+    ),
+    SaldoAnterior AS (
+        SELECT
+            de.id_uf,
+            -- Busca la DEUDA FINAL del período ANTERIOR para esta UF
+            ISNULL((
+                SELECT TOP 1 ecp.deuda 
+                FROM estadoCuentaProrrateo ecp
+                INNER JOIN expensa e_prev ON e_prev.id_expensa = ecp.id_expensa
+                WHERE ecp.id_uf = de.id_uf
+                AND e_prev.periodo = @periodo_anterior -- FILTRA por PERIODO ANTERIOR
+                ORDER BY ecp.id_detalleDeCuenta DESC
+            ), 0.00) AS SaldoAnteriorCalculado
+        FROM DatosExpensa de
+        GROUP BY de.id_uf
+    ),
+    ProrrateoCalculado AS (
+        SELECT
+            de.id_expensa, de.id_uf, sa.SaldoAnteriorCalculado AS saldo_anterior,
+            (de.subtotal_ordinarios * de.coeficiente) AS expensas_ordinarias,
+            (de.subtotal_extraordinarios * de.coeficiente) AS expensas_extraordinarias
+        FROM DatosExpensa de
+        INNER JOIN SaldoAnterior sa ON de.id_uf = sa.id_uf
+    )
+    -- Insertar el Prorrateo en la tabla de destino
+    INSERT INTO estadoCuentaProrrateo (
+        id_expensa, id_uf, id_pago, fecha_emision, fecha_1er_venc, fecha_2do_venc,
+        saldo_anterior, pagos_recibidos, deuda, interes_por_mora, expensas_ordinarias,
+        expensas_extraordinarias, total_pagar 
+    )
+    SELECT
+        pc.id_expensa, pc.id_uf, NULL AS id_pago, @fecha_emision, @fecha_1er_venc, @fecha_2do_venc,
+        pc.saldo_anterior, 0.00 AS pagos_recibidos, 
+        pc.saldo_anterior + pc.expensas_ordinarias + pc.expensas_extraordinarias AS deuda_inicial,
+        0.00 AS interes_por_mora, 
+        pc.expensas_ordinarias, pc.expensas_extraordinarias,
+        pc.saldo_anterior + pc.expensas_ordinarias + pc.expensas_extraordinarias AS total_pagar_inicial
+    FROM ProrrateoCalculado pc
+    WHERE NOT EXISTS (
+        SELECT 1 FROM estadoCuentaProrrateo ecp WHERE ecp.id_expensa = pc.id_expensa AND ecp.id_uf = pc.id_uf
+    ); 
+
+    PRINT 'Generación de Estado de Cuenta y Prorrateo completada para el período: ' + @periodo_completo;
+
+END
+GO
+-------------------- ACTUALIZAR PAGO ------------------------
+CREATE OR ALTER PROCEDURE sp_asociar_y_aplicar_pagos
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Limpiamos la tabla temporal por si quedó de una ejecución previa
+    IF OBJECT_ID('tempdb..#PagosFinales') IS NOT NULL DROP TABLE #PagosFinales;
+
+    -- Identificar el pago, calcular intereses y guardar el resultado en la tabla temporal
+    WITH PagosParaAplicar AS (
+        SELECT
+            p.id_pago,
+            p.fecha AS fecha_pago_real, 
+            p.importe AS importe_pago,
+            ecp.id_detalleDeCuenta,
+            ecp.deuda AS deuda_pendiente,
+            ecp.fecha_1er_venc,
+            ecp.fecha_2do_venc,
+            -- Calculo de Interés y montos necesarios
+            CASE
+                WHEN p.fecha > ecp.fecha_2do_venc THEN ecp.deuda * 0.05
+                WHEN p.fecha > ecp.fecha_1er_venc THEN ecp.deuda * 0.02
+                ELSE 0.00
+            END AS interes_calculado,
+            -- Prioriza la expensa PENDIENTE más antigua (rn = 1)
+            ROW_NUMBER() OVER (PARTITION BY p.id_pago ORDER BY e.periodo ASC) as rn
+        FROM pago p
+        INNER JOIN unidadFuncional uf ON p.cuenta_origen = uf.cuenta_origen
+        INNER JOIN estadoCuentaProrrateo ecp ON uf.id_uf = ecp.id_uf
+        INNER JOIN expensa e ON ecp.id_expensa = e.id_expensa
+        WHERE p.asociado = 'NO'
+          AND ecp.deuda > 0
+          AND ecp.id_pago IS NULL
+    )
+    -- Guardamos el resultado de la CTE en la tabla temporal para que sea accesible por los UPDATES
+    SELECT
+        id_pago,
+        id_detalleDeCuenta,
+        importe_pago,
+        deuda_pendiente,
+        interes_calculado,
+        deuda_pendiente + interes_calculado AS total_requerido,
+        (deuda_pendiente + interes_calculado) - importe_pago AS nueva_deuda_calculada
+    INTO #PagosFinales 
+    FROM PagosParaAplicar
+    WHERE rn = 1; 
+    
+    -- Actualizar la tabla 'pago' (Ahora usa la tabla temporal #PagosFinales)
+    UPDATE p
+    SET
+        p.asociado = 'SI'
+    FROM pago p
+    INNER JOIN #PagosFinales pf ON p.id_pago = pf.id_pago;
+
+    -- Actualizar estadoCuentaProrrateo (Ahora usa la tabla temporal #PagosFinales)
+    UPDATE ecp
+    SET
+        ecp.id_pago = pf.id_pago,
+        ecp.pagos_recibidos = pf.importe_pago,
+        ecp.interes_por_mora = pf.interes_calculado,
+        ecp.total_pagar = pf.total_requerido,
+        ecp.deuda = CASE
+            WHEN pf.nueva_deuda_calculada <= 0.00 THEN 0.00
+            ELSE pf.nueva_deuda_calculada
+        END
+    FROM estadoCuentaProrrateo ecp
+    INNER JOIN #PagosFinales pf ON ecp.id_detalleDeCuenta = pf.id_detalleDeCuenta;
+
+    PRINT 'Proceso de asociación y aplicación de pagos completado';
+
+END
+GO
+------------------- ESTADO FINANCIERO -----------------------------
+CREATE OR ALTER PROCEDURE sp_generar_estadoFinanciero
+    @periodo_mes VARCHAR(12),
+    @anio INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @periodo_completo VARCHAR(10);
+    
+    --Validar y construir el período (AAAA-MM)
+    SELECT @periodo_completo = CONCAT(@anio, '-', M.num)
+    FROM (
+        SELECT 'enero' AS nombre, '01' AS num UNION ALL SELECT 'febrero', '02' UNION ALL SELECT 'marzo', '03' UNION ALL SELECT 'abril', '04' UNION ALL
+        SELECT 'mayo', '05' UNION ALL SELECT 'junio', '06' UNION ALL SELECT 'julio', '07' UNION ALL SELECT 'agosto', '08' UNION ALL
+        SELECT 'septiembre', '09' UNION ALL SELECT 'octubre', '10' UNION ALL SELECT 'noviembre', '11' UNION ALL SELECT 'diciembre', '12'
+    ) AS M
+    WHERE LOWER(M.nombre) = LOWER(@periodo_mes);
+
+    IF @periodo_completo IS NULL
+    BEGIN
+        PRINT 'ERROR: Período de mes no válido.';
+        RETURN;
+    END;
+
+    -- Calcular datos financieros
+    WITH DatosFinancieros AS (
+        SELECT
+            c.id_consorcio, 
+            e.id_expensa,
+            CONVERT(DATE, @periodo_completo + '-01') AS PeriodoFecha,
+            
+            -- Saldo Anterior
+            ISNULL((
+                SELECT TOP 1 ef_prev.saldo_cierre
+                FROM estadoFinanciero ef_prev
+                WHERE ef_prev.id_consorcio = c.id_consorcio
+                AND ef_prev.periodo = CONVERT(DATE, DATEADD(MONTH, -1, CONVERT(DATE, @periodo_completo + '-01'))) 
+                ORDER BY ef_prev.id DESC
+            ), 0.00) AS SaldoAnteriorCalculado,
+            
+            -- Ingresos por pago de expensas en término (Pago <= 1er Vencimiento)
+            SUM(CASE WHEN p.fecha <= ecp.fecha_1er_venc THEN p.importe ELSE 0 END) AS TotalIngresoTermino,
+            
+            -- Ingresos por pago de expensas adeudadas (Pago > 1er Vencimiento y asociado al período)
+            SUM(CASE WHEN p.fecha > ecp.fecha_1er_venc AND p.importe > 0 AND p.asociado = 'SI' THEN p.importe ELSE 0 END) AS TotalIngresoAdeudadas,
+            
+            -- Ingresos por expensas adelantadas (se asume 0.00)
+            0.00 AS TotalIngresoAdelantadas, 
+            
+            -- Egresos por gastos del mes
+            ISNULL((
+                SELECT (g.subtotal_ordinarios + g.subtotal_extraordinarios) 
+                FROM gasto g 
+                WHERE g.id_expensa = e.id_expensa
+            ), 0.00) AS EgresoCalculado
+            
+        FROM consorcio c
+        INNER JOIN expensa e ON c.id_consorcio = e.id_consorcio
+        LEFT JOIN estadoCuentaProrrateo ecp ON e.id_expensa = ecp.id_expensa
+        LEFT JOIN pago p ON ecp.id_pago = p.id_pago 
+        WHERE e.periodo = @periodo_completo
+        GROUP BY c.id_consorcio, e.id_expensa 
+    )
+    -- Insertar el Estado Financiero
+    INSERT INTO estadoFinanciero (
+        id_consorcio, saldo_anterior, ingreso_expensas_termino, ingreso_expensas_adeudadas,
+        ingreso_expensas_adelantadas, egreso, saldo_cierre, periodo
+    )
+    SELECT
+        df.id_consorcio, df.SaldoAnteriorCalculado, df.TotalIngresoTermino, df.TotalIngresoAdeudadas,
+        df.TotalIngresoAdelantadas, df.EgresoCalculado,
+        -- Saldo al cierre: Saldo Anterior + Ingresos Totales - Egresos Totales
+        df.SaldoAnteriorCalculado + df.TotalIngresoTermino + df.TotalIngresoAdeudadas + df.TotalIngresoAdelantadas - df.EgresoCalculado AS saldo_cierre_calculado,
+        df.PeriodoFecha
+    FROM DatosFinancieros df
+    WHERE NOT EXISTS (
+        SELECT 1 FROM estadoFinanciero ef WHERE ef.id_consorcio = df.id_consorcio AND ef.periodo = df.PeriodoFecha
+    ); 
+
+    PRINT 'Generación de Estado Financiero completada para el período: ' + @periodo_completo;
+
+END
+GO
+-------------------------------------------------------------------------
+-- VARIABLES DE PERÍODO: JUNIO 2025 (porque asi tenia cargada expensa)  EJECUTEN TODO JUNTO
+-------------------------------------------------------------------------
+DECLARE @periodo_mes_eje VARCHAR(12) = 'Junio'; 
+DECLARE @anio_eje INT = 2025; 
+GO 
+
+-- Redeclaramos las variables para este lote
+DECLARE @periodo_mes_eje VARCHAR(12) = 'Junio'; 
+DECLARE @anio_eje INT = 2025; 
+
+PRINT '--- 1. INICIANDO GENERACIÓN DE DEUDA (PRORRATEO)---';
+EXEC sp_generar_estadoCuentaProrrateo @periodo_mes = @periodo_mes_eje, @anio = @anio_eje;
+GO 
+
+PRINT '--- 2. CARGANDO PAGOS DESDE EL ARCHIVO ---';
+
+GO 
+
+PRINT '--- 3. INICIANDO APLICACIÓN DE PAGOS Y CÁLCULO DE INTERESES ---';
+EXEC sp_asociar_y_aplicar_pagos;
+GO 
+
+-- Redeclaramos las variables por última vez
+DECLARE @periodo_mes_eje VARCHAR(12) = 'Junio'; 
+DECLARE @anio_eje INT = 2025; 
+
+PRINT '--- 4. INICIANDO GENERACIÓN DE ESTADO FINANCIERO ---';
+EXEC sp_generar_estadoFinanciero @periodo_mes = @periodo_mes_eje, @anio = @anio_eje;
+GO
+
+PRINT '--- FLUJO DE PROCESAMIENTO FINALIZADO CON ÉXITO ---';
+
+SELECT * FROM gasto
+SELECT * FROM pago
+SELECT * FROM estadoCuentaProrrateo
+SELECT * FROM estadoFinanciero
