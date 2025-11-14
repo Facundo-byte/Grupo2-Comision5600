@@ -27,19 +27,6 @@ go
 drop table if exists consorcio
 go 
 --------------------------------------------------
-create table pago (
-	id_pago int identity(1,1) primary key not null,
-	fecha date,
-	cuenta_origen varchar(50),
-	importe decimal(13,2),
-	asociado char(2) not null,
-    id_detalleDeCuenta int null
-    constraint fk_pago_detalleDeCuenta 
-    foreign key(id_detalleDeCuenta) references estadoCuentaProrrateo(id_detalleDeCuenta),
-    CONSTRAINT chk_pago_cuentaOrigen CHECK (ISNUMERIC(cuenta_origen) = 1),
-    CONSTRAINT chk_pago_importe CHECK (importe > 0),
-    );
-go 
 
 create table consorcio (
 	id_consorcio int identity(1,1) primary key,
@@ -183,3 +170,16 @@ create table proveedor (
 	foreign key (id_consorcio) references consorcio (id_consorcio)
 	);
 go
+create table pago (
+	id_pago int identity(1,1) primary key not null,
+	fecha date,
+	cuenta_origen varchar(50),
+	importe decimal(13,2),
+	asociado char(2) not null,
+    id_detalleDeCuenta int null
+    constraint fk_pago_detalleDeCuenta 
+    foreign key(id_detalleDeCuenta) references estadoCuentaProrrateo(id_detalleDeCuenta),
+    CONSTRAINT chk_pago_cuentaOrigen CHECK (ISNUMERIC(cuenta_origen) = 1),
+    CONSTRAINT chk_pago_importe CHECK (importe > 0),
+    );
+go 

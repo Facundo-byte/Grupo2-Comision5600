@@ -7,7 +7,7 @@ DELETE FROM persona;
 DBCC CHECKIDENT ('persona', RESEED, 0);
 EXEC sp_importar_personas @RutaArchivoPersonas = @archivo_personas;
 GO
---select * from persona;
+select * from persona;
 
 --CARGAR consorcio
 DECLARE @archivo_consorcios VARCHAR(255) = ''; --<-- datos varios 1(Consorcios).csv
@@ -61,7 +61,7 @@ select * from proveedor
 -- CARGAR expensa
 --DELETE FROM expensa;
 --DBCC CHECKIDENT ('expensa', RESEED, 0);
-DECLARE @periodo_mes_test VARCHAR(12) = 'Abril'; -- El mes que quieres generar (Abril, Mayo, Junio)
+DECLARE @periodo_mes_test VARCHAR(12) = ''; -- El mes que quieres generar (Abril, Mayo, Junio)
 DECLARE @anio_test INT = 2025;             -- El a�o
 
 -- 2. Ejecutar el Stored Procedure
@@ -156,7 +156,7 @@ GO
 -- EJECUCION estadoCuentaProrrateo
 -- VARIABLES DE PERÍODO: JUNIO 2025 (porque asi tenia cargada expensa)  EJECUTEN TODO JUNTO
 -------------------------------------------------------------------------
-DECLARE @periodo_mes_eje VARCHAR(12) = 'Abril'; 
+DECLARE @periodo_mes_eje VARCHAR(12) = 'Junio'; 
 DECLARE @anio_eje INT = 2025; 
 GO 
 
