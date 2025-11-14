@@ -127,7 +127,7 @@ BEGIN
     EXEC sp_executesql @sql_dinamicoUF;
 
     -- Insertar en la tabla final unidadfuncional con transformaciones
-    -- Nota: Aqu� se asume que la tabla 'unidadfuncional' no admite duplicados (lo que debes validar)
+    -- Nota: Aqu� se asume que la tabla 'unidadfuncional' no admite duplicados 
     INSERT INTO unidadFuncional (id_consorcio, numero_uf, piso, depto, cochera, cochera_m2, baulera, baulera_m2, cant_m2, coeficiente)
 	SELECT    UPPER(c.id_consorcio), CAST(u.numero_uf AS INT), CAST(u.piso AS varchar(3)), CAST(u.depto as varchar(5)), 
         CASE WHEN u.cochera = 'SI' THEN 1 ELSE 0 END, CAST(u.cochera_m2 AS INT), CASE WHEN u.baulera = 'SI' THEN 1 ELSE 0 END, 
@@ -249,7 +249,7 @@ BEGIN
     SELECT
         p.dni, 
         uf.id_uf,
-        GETDATE() AS fecha_desde, -- Asumimos la fecha actual para la relación (esto no sé si es así)
+        GETDATE() AS fecha_desde, -- Asumimos la fecha actual para la relación 
         NULL AS fecha_hasta,
         -- Inferimos el tipo de responsable usando la columna 'Inquilino'
         CASE WHEN tps.Inquilino = 1 THEN 'INQUILINO' ELSE 'PROPIETARIO' END AS tipo_responsable
@@ -530,7 +530,7 @@ BEGIN
         luz NVARCHAR(20)
     );
 
-    -- 2. Lectura del JSON a la tabla temporal (Pivoteada)
+    --  Lectura del JSON a la tabla temporal (Pivoteada)
     DECLARE @SQL NVARCHAR(MAX);
     SET @SQL = N'
     INSERT INTO #gastoOrdinarioTemp (nombreConsorcio, mes_nombre, bancarios, limpieza, administracion, seguros, gastosGenerales, agua, luz)
@@ -567,7 +567,7 @@ BEGIN
     ),
 
     MapeoGastos AS ( 
-        -- Paso 1: Aplanar la tabla temporal (UNPIVOT LÓGICO)
+        --  Aplanar la tabla temporal (UNPIVOT LÓGICO)
         SELECT 
             c.id_consorcio,
             g.id_gasto,
@@ -593,7 +593,7 @@ BEGIN
         INNER JOIN Gasto g ON g.id_expensa = e.id_expensa
     ),
     
-    -- Paso 2: Mapear a Proveedor y Aplicar Lógica de Negocio
+    --  Mapear a Proveedor y Aplicar Lógica de Negocio
     FinalData AS (
         SELECT
             m.id_gasto,
@@ -604,16 +604,13 @@ BEGIN
             
             p.nombre_empresa,
             
-            -- ***************************************************************
-            -- CONVERSIÓN EXTREMA: Eliminar todos los separadores de miles y estandarizar la coma decimal
-            -- ***************************************************************
-            TRY_CAST(
-                REPLACE(
-                    REPLACE( -- 2. Reemplazamos las comas (posibles separadores decimales) por puntos
-                        REPLACE(TRIM(m.ImporteString), '.', ''), -- 1. Primero, eliminamos todos los puntos (asumidos separadores de miles)
-                    ',', '.'),
-                ' ', '') -- 3. Eliminamos cualquier espacio residual que pueda causar error
-            AS DECIMAL(18, 2)) AS importe
+           TRY_CAST(
+               REPLACE(
+                   REPLACE(
+                       TRIM(m.ImporteString), 
+                   '.', ''), -- 1. Eliminar todos los puntos (asumidos separadores de miles)
+               ',', '')       -- 2. Eliminar todas las comas (asumidas separadores de miles/decimales)
+           AS DECIMAL(18, 2)) / 100.0 AS importe
             
         FROM MapeoGastos m
         -- LEFT JOIN a Proveedor
@@ -632,7 +629,7 @@ BEGIN
                     ELSE 'OTROS'
                 END
             )
-            -- 2. Discriminación de Proveedor (AYSA/EDENOR)
+            --  Discriminación de Proveedor (AYSA/EDENOR)
             AND (
                 (m.TipoGastoCorto = 'AGUA' AND p.nombre_empresa = 'AYSA')
                 OR (m.TipoGastoCorto = 'LUZ' AND p.nombre_empresa = 'EDENOR')
@@ -640,7 +637,7 @@ BEGIN
             )
     )
 
-    -- 4. Inserción Final
+    --  Inserción Final
     INSERT INTO gastoOrdinario (id_gasto, tipo_gasto, subtipoGasto, nombre_empresa, importe)
     SELECT
         fd.id_gasto,
@@ -654,7 +651,7 @@ BEGIN
         AND fd.importe > 0
         AND fd.id_gasto IS NOT NULL;
 
-    -- 5. Limpieza y Mensaje
+    --  Limpieza y Mensaje
     DROP TABLE #gastoOrdinarioTemp;
     
     PRINT 'Carga de Gastos Ordinarios completada. Se insertaron ' + CAST(@@ROWCOUNT AS VARCHAR) + ' registros.';
@@ -698,7 +695,7 @@ BEGIN
 	FROM #tempGastoExtraordinario tge 
     inner join consorcio c on tge.nombre_consorcio = c.nombre
     
-    --Asocia id_gasto a cada gasto (lo prob� y funciona perfecto, pero testear por las dudas)
+    --Asocia id_gasto a cada gasto 
     UPDATE ge 
     SET ge.id_gasto = g.id_gasto
     FROM gastoExtraordinario ge
@@ -710,22 +707,22 @@ BEGIN
 END
 GO
 --------------------------------------------------------------------------------------------------------------------------------------------
--- CARGAR subtotalOrdinario EN gasto
+-- CARGAR subtotales EN gasto
 CREATE OR ALTER PROCEDURE sp_calcularSubtotalesGastos
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- FIX: Se combinan ambas CTEs en una única cláusula WITH, separadas por coma.
+    --  Se combinan ambas CTEs en una única cláusula WITH, separadas por coma.
     WITH SubtotalesOrdinarios AS (
         SELECT
-            go.id_gasto,
-            SUM(go.importe) AS TotalOrdinario
+            ge.id_gasto,
+            SUM(ge.importe) AS TotalOrdinario
         FROM
-            gastoOrdinario go
+            gastoOrdinario ge
         GROUP BY
-            go.id_gasto
-    ), -- <--- ¡LA COMA ES ESENCIAL AQUÍ!
+            ge.id_gasto
+    ), -- 
     
     SubtotalesExtraordinarios AS (
         SELECT
@@ -735,7 +732,7 @@ BEGIN
             gastoExtraordinario ge
         GROUP BY
             ge.id_gasto
-    ) -- No lleva coma porque le sigue la instrucción principal (UPDATE)
+    ) 
 
     -- Realizar la actualización masiva de la tabla 'gasto'
     UPDATE g
@@ -755,7 +752,7 @@ BEGIN
         OR g.subtotal_ordinarios <> ISNULL(so.TotalOrdinario, 0)
         OR g.subtotal_extraordinarios <> ISNULL(se.TotalExtraordinario, 0);
 
-    -- Mensaje de éxito
+    
     PRINT 'Actualización de subtotales de gastos completada. ' + CAST(@@ROWCOUNT AS VARCHAR) + ' registros actualizados.';
     RETURN 0;
 
@@ -858,80 +855,8 @@ END
 GO
 
 select * from estadoCuentaProrrateo
--------------------- ACTUALIZAR PAGO ------------------------
-/*CREATE OR ALTER PROCEDURE sp_asociar_y_aplicar_pagos
-AS
-BEGIN
-    SET NOCOUNT ON;
 
-    -- Limpiamos la tabla temporal por si quedó de una ejecución previa
-    IF OBJECT_ID('tempdb..#PagosFinales') IS NOT NULL DROP TABLE #PagosFinales;
-
-    -- Identificar el pago, calcular intereses y guardar el resultado en la tabla temporal
-    WITH PagosParaAplicar AS (
-        SELECT
-            p.id_pago,
-            p.fecha AS fecha_pago_real, 
-            p.importe AS importe_pago,
-            ecp.id_detalleDeCuenta,
-            ecp.deuda AS deuda_pendiente,
-            ecp.fecha_1er_venc,
-            ecp.fecha_2do_venc,
-            -- Calculo de Interés y montos necesarios
-            CASE
-                WHEN p.fecha > ecp.fecha_2do_venc THEN ecp.deuda * 0.05
-                WHEN p.fecha > ecp.fecha_1er_venc THEN ecp.deuda * 0.02
-                ELSE 0.00
-            END AS interes_calculado,
-            -- Prioriza la expensa PENDIENTE más antigua (rn = 1)
-            ROW_NUMBER() OVER (PARTITION BY p.id_pago ORDER BY e.periodo ASC) as rn
-        FROM pago p
-        INNER JOIN unidadFuncional uf ON p.cuenta_origen = uf.cuenta_origen
-        INNER JOIN estadoCuentaProrrateo ecp ON uf.id_uf = ecp.id_uf
-        INNER JOIN expensa e ON ecp.id_expensa = e.id_expensa
-        WHERE p.asociado = 'NO'
-          AND ecp.deuda > 0
-          AND ecp.id_pago IS NULL
-    )
-    -- Guardamos el resultado de la CTE en la tabla temporal para que sea accesible por los UPDATES
-    SELECT
-        id_pago,
-        id_detalleDeCuenta,
-        importe_pago,
-        deuda_pendiente,
-        interes_calculado,
-        deuda_pendiente + interes_calculado AS total_requerido,
-        (deuda_pendiente + interes_calculado) - importe_pago AS nueva_deuda_calculada
-    INTO #PagosFinales 
-    FROM PagosParaAplicar
-    WHERE rn = 1; 
-    
-    -- Actualizar la tabla 'pago' (Ahora usa la tabla temporal #PagosFinales)
-    UPDATE p
-    SET
-        p.asociado = 'SI'
-    FROM pago p
-    INNER JOIN #PagosFinales pf ON p.id_pago = pf.id_pago;
-
-    -- Actualizar estadoCuentaProrrateo (Ahora usa la tabla temporal #PagosFinales)
-    UPDATE ecp
-    SET
-        ecp.id_pago = pf.id_pago,
-        ecp.pagos_recibidos = pf.importe_pago,
-        ecp.interes_por_mora = pf.interes_calculado,
-        ecp.total_pagar = pf.total_requerido,
-        ecp.deuda = CASE
-            WHEN pf.nueva_deuda_calculada <= 0.00 THEN 0.00
-            ELSE pf.nueva_deuda_calculada
-        END
-    FROM estadoCuentaProrrateo ecp
-    INNER JOIN #PagosFinales pf ON ecp.id_detalleDeCuenta = pf.id_detalleDeCuenta;
-
-    PRINT 'Proceso de asociación y aplicación de pagos completado';
-
-END
-GO*/
-
+--------------------------------Asociar los pagos------------------------------------------
 CREATE OR ALTER PROCEDURE sp_AsociarPagosAEstadoCuenta
 AS
 BEGIN
@@ -941,7 +866,7 @@ BEGIN
     -- Declarar variables para seguimiento
     DECLARE @PagosAsociados INT = 0;
 
-    -- Paso 1: Actualizar la tabla 'pago' para asociar los pagos a un 'estadoCuentaProrrateo'
+    -- Actualizar la tabla 'pago' para asociar los pagos a un 'estadoCuentaProrrateo'
     -- Se añade la condición de que el AÑO y el MES del pago (P.fecha) 
     -- deben coincidir con el AÑO y el MES de emisión de la expensa (ECP.fecha_emision).
     UPDATE P
@@ -958,7 +883,6 @@ BEGIN
         P.asociado = 'NO' -- Solo pagos no asociados
         AND P.id_detalleDeCuenta IS NULL -- Aseguramos que no tenga asociación previa
         
-        -- Lógica de comparación de Periodo (Año y Mes) solicitada:
         -- Asocia el pago a la expensa emitida en el MISMO mes y año del pago.
         AND YEAR(P.fecha) = YEAR(ECP.fecha_emision)
         AND MONTH(P.fecha) = MONTH(ECP.fecha_emision);
@@ -966,7 +890,6 @@ BEGIN
     -- Capturar el número de filas actualizadas
     SET @PagosAsociados = @@ROWCOUNT;
 
-    -- Paso 2: Actualizar la tabla 'estadoCuentaProrrateo' con los pagos recibidos
     -- Se suma el importe de los pagos recién asociados (y los previamente asociados) 
     -- al campo 'pagos_recibidos' de la cuenta corriente.
     UPDATE ECP
@@ -998,7 +921,7 @@ BEGIN
     DECLARE @Interes DECIMAL(10,2) = 0.00;
     
     IF @p_saldo_pendiente <= 0
-        RETURN 0.00; -- No hay mora si no hay saldo pendiente
+        RETURN 0.00; 
 
     -- Caso 1: Después del 2do Vencimiento (5%)
     IF @p_fecha_calculo > @p_fecha_2do_venc
@@ -1008,7 +931,7 @@ BEGIN
     -- Caso 2: Después del 1er Vencimiento y hasta el 2do Vencimiento (2%)
     ELSE IF @p_fecha_calculo > @p_fecha_1er_venc
     BEGIN
-        -- Nota: La mora del 2% se suele aplicar al monto Ordinario/Total (no solo al saldo pendiente).
+        -- Nota: La mora del 2% se aplica al monto Ordinario/Total (no solo al saldo pendiente).
         -- Para simplificar y seguir la lógica de aplicar mora al "saldo pendiente" (Deuda),
         -- aplicaremos el 2% a ese saldo pendiente.
         SET @Interes = @p_saldo_pendiente * 0.02; 
@@ -1026,16 +949,16 @@ BEGIN
     -- Se utiliza la fecha actual para determinar si aplica mora
     DECLARE @FechaCalculo DATE = GETDATE();
 
-    -- 1. Actualizar DEUDA e INTERES_POR_MORA para *TODAS* las expensas
+    -- Actualizar DEUDA e INTERES_POR_MORA para *TODAS* las expensas
     -- La lógica de mora se aplica sobre el SALDO PENDIENTE (Total a Pagar Inicial - Pagos Recibidos)
 
     UPDATE ECP
     SET
-        -- 1a. Calcular el SALDO PENDIENTE (Deuda) 
+        -- Calcular el SALDO PENDIENTE (Deuda) 
         -- Nota: Usamos la columna 'deuda' para guardar el saldo final adeudado.
         ECP.deuda = ECP.total_pagar - ISNULL(ECP.pagos_recibidos, 0),
         
-        -- 1b. Calcular el nuevo INTERÉS POR MORA
+        -- Calcular el nuevo INTERÉS POR MORA
         -- Se aplica mora solo si el pago fue menor que el total a pagar
         ECP.interes_por_mora = 
             CASE
@@ -1058,7 +981,7 @@ BEGIN
     
     UPDATE ECP
     SET
-        -- Total a pagar = Deuda Pendiente (calculada en el paso 1) + Interés por Mora (calculado en el paso 1)
+        -- Total a pagar = Deuda Pendiente + Interés por Mora 
         ECP.total_pagar = ECP.deuda + ECP.interes_por_mora
     FROM
         estadoCuentaProrrateo ECP; -- Aplica a TODAS las filas
@@ -1072,89 +995,188 @@ GO
 
 
 ------------------- ESTADO FINANCIERO -----------------------------
-CREATE OR ALTER PROCEDURE sp_generar_estadoFinanciero
-    @periodo_mes VARCHAR(12),
-    @anio INT
+CREATE OR ALTER PROCEDURE generarEstadoFinanciero
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @periodo_completo VARCHAR(10);
-    
-    --Validar y construir el período (AAAA-MM)
-    SELECT @periodo_completo = CONCAT(@anio, '-', M.num)
-    FROM (
-        SELECT 'enero' AS nombre, '01' AS num UNION ALL SELECT 'febrero', '02' UNION ALL SELECT 'marzo', '03' UNION ALL SELECT 'abril', '04' UNION ALL
-        SELECT 'mayo', '05' UNION ALL SELECT 'junio', '06' UNION ALL SELECT 'julio', '07' UNION ALL SELECT 'agosto', '08' UNION ALL
-        SELECT 'septiembre', '09' UNION ALL SELECT 'octubre', '10' UNION ALL SELECT 'noviembre', '11' UNION ALL SELECT 'diciembre', '12'
-    ) AS M
-    WHERE LOWER(M.nombre) = LOWER(@periodo_mes);
+    -------------------------------------------------------------------
+    -- Obtener todos los períodos como fecha, ordenados
+    -------------------------------------------------------------------
+    IF OBJECT_ID('tempdb..#periodos') IS NOT NULL DROP TABLE #periodos;
 
-    IF @periodo_completo IS NULL
+    SELECT DISTINCT 
+        CONVERT(date, periodo + '-01') AS periodo_fecha
+    INTO #periodos
+    FROM expensa;
+
+    -------------------------------------------------------------------
+    -- Ordenar períodos
+    -------------------------------------------------------------------
+    DECLARE @periodo_actual DATE;
+
+    WHILE EXISTS (SELECT 1 FROM #periodos)
     BEGIN
-        PRINT 'ERROR: Período de mes no válido.';
-        RETURN;
-    END;
+        -------------------------------------------------------------------
+        -- Tomar el período más antiguo
+        -------------------------------------------------------------------
+        SELECT TOP 1 @periodo_actual = periodo_fecha
+        FROM #periodos
+        ORDER BY periodo_fecha;
 
-    -- Calcular datos financieros
-    WITH DatosFinancieros AS (
-        SELECT
-            c.id_consorcio, 
-            e.id_expensa,
-            CONVERT(DATE, @periodo_completo + '-01') AS PeriodoFecha,
-            
-            -- Saldo Anterior
+        -------------------------------------------------------------------
+        -- Insertar estado financiero para todos los consorcios en este período
+        -------------------------------------------------------------------
+        INSERT INTO estadoFinanciero (
+            id_consorcio,
+            saldo_anterior,
+            ingreso_expensas_termino,
+            ingreso_expensas_adeudadas,
+            ingreso_expensas_adelantadas,
+            egreso,
+            saldo_cierre,
+            periodo
+        )
+        SELECT  
+            c.id_consorcio,
+
+            --------------------------------------------------------------
+            -- SALDO ANTERIOR
+            --------------------------------------------------------------
             ISNULL((
-                SELECT TOP 1 ef_prev.saldo_cierre
-                FROM estadoFinanciero ef_prev
-                WHERE ef_prev.id_consorcio = c.id_consorcio
-                AND ef_prev.periodo = CONVERT(DATE, DATEADD(MONTH, -1, CONVERT(DATE, @periodo_completo + '-01'))) 
-                ORDER BY ef_prev.id DESC
-            ), 0.00) AS SaldoAnteriorCalculado,
-            
-            -- Ingresos por pago de expensas en término (Pago <= 1er Vencimiento)
-            SUM(CASE WHEN p.fecha <= ecp.fecha_1er_venc THEN p.importe ELSE 0 END) AS TotalIngresoTermino,
-            
-            -- Ingresos por pago de expensas adeudadas (Pago > 1er Vencimiento y asociado al período)
-            SUM(CASE WHEN p.fecha > ecp.fecha_1er_venc AND p.importe > 0 AND p.asociado = 'SI' THEN p.importe ELSE 0 END) AS TotalIngresoAdeudadas,
-            
-            -- Ingresos por expensas adelantadas (se asume 0.00)
-            0.00 AS TotalIngresoAdelantadas, 
-            
-            -- Egresos por gastos del mes
+                SELECT TOP 1 ef.saldo_cierre
+                FROM estadoFinanciero ef
+                WHERE ef.id_consorcio = c.id_consorcio
+                  AND ef.periodo < @periodo_actual
+                ORDER BY ef.periodo DESC
+            ), 0) AS saldo_anterior,
+
+            --------------------------------------------------------------
+            -- INGRESOS EN TÉRMINO
+            --------------------------------------------------------------
             ISNULL((
-                SELECT (g.subtotal_ordinarios + g.subtotal_extraordinarios) 
-                FROM gasto g 
-                WHERE g.id_expensa = e.id_expensa
-            ), 0.00) AS EgresoCalculado
-            
-        FROM consorcio c
-        INNER JOIN expensa e ON c.id_consorcio = e.id_consorcio
-        LEFT JOIN estadoCuentaProrrateo ecp ON e.id_expensa = ecp.id_expensa
-        LEFT JOIN pago p ON ecp.id_pago = p.id_pago 
-        WHERE e.periodo = @periodo_completo
-        GROUP BY c.id_consorcio, e.id_expensa 
-    )
-    -- Insertar el Estado Financiero
-    INSERT INTO estadoFinanciero (
-        id_consorcio, saldo_anterior, ingreso_expensas_termino, ingreso_expensas_adeudadas,
-        ingreso_expensas_adelantadas, egreso, saldo_cierre, periodo
-    )
-    SELECT
-        df.id_consorcio, df.SaldoAnteriorCalculado, df.TotalIngresoTermino, df.TotalIngresoAdeudadas,
-        df.TotalIngresoAdelantadas, df.EgresoCalculado,
-        -- Saldo al cierre: Saldo Anterior + Ingresos Totales - Egresos Totales
-        df.SaldoAnteriorCalculado + df.TotalIngresoTermino + df.TotalIngresoAdeudadas + df.TotalIngresoAdelantadas - df.EgresoCalculado AS saldo_cierre_calculado,
-        df.PeriodoFecha
-    FROM DatosFinancieros df
-    WHERE NOT EXISTS (
-        SELECT 1 FROM estadoFinanciero ef WHERE ef.id_consorcio = df.id_consorcio AND ef.periodo = df.PeriodoFecha
-    ); 
+                SELECT SUM(pg.importe)
+                FROM pago pg
+                JOIN estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                JOIN expensa ex ON ec.id_expensa = ex.id_expensa
+                WHERE ex.id_consorcio = c.id_consorcio
+                  AND CONVERT(date, ex.periodo + '-01') = @periodo_actual
+                  AND pg.fecha <= ec.fecha_2do_venc
+                  AND pg.fecha >= ec.fecha_emision
+            ), 0) AS ingreso_termino,
 
-    PRINT 'Generación de Estado Financiero completada para el período: ' + @periodo_completo;
+            --------------------------------------------------------------
+            -- INGRESOS ADEUDADOS
+            --------------------------------------------------------------
+            ISNULL((
+                SELECT SUM(pg.importe)
+                FROM pago pg
+                JOIN estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                JOIN expensa ex ON ec.id_expensa = ex.id_expensa
+                WHERE ex.id_consorcio = c.id_consorcio
+                  AND CONVERT(date, ex.periodo + '-01') = @periodo_actual
+                  AND pg.fecha > ec.fecha_2do_venc
+            ), 0) AS ingreso_adeudadas,
 
-END
-GO
---------------------------------------------------------------------------------------------------------------------------------------------
+            --------------------------------------------------------------
+            -- INGRESOS ADELANTADOS
+            --------------------------------------------------------------
+            ISNULL((
+                SELECT SUM(pg.importe)
+                FROM pago pg
+                JOIN estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                JOIN expensa ex ON ec.id_expensa = ex.id_expensa
+                WHERE ex.id_consorcio = c.id_consorcio
+                  AND CONVERT(date, ex.periodo + '-01') = @periodo_actual
+                  AND pg.fecha < ec.fecha_emision
+            ), 0) AS ingreso_adelantadas,
 
---------------------------------------------------------------------------------------------------------------------------------------------
+            --------------------------------------------------------------
+            -- EGRESOS
+            --------------------------------------------------------------
+            (
+                ISNULL((
+                    SELECT SUM(gor.importe)
+                    FROM gasto g
+                    JOIN gastoOrdinario gor ON g.id_gasto = gor.id_gasto
+                    WHERE g.id_expensa IN (
+                        SELECT id_expensa FROM expensa
+                        WHERE id_consorcio = c.id_consorcio
+                          AND CONVERT(date, periodo + '-01') = @periodo_actual
+                    )
+                ), 0)
+                +
+                ISNULL((
+                    SELECT SUM(ger.importe)
+                    FROM gasto g
+                    JOIN gastoExtraordinario ger ON g.id_gasto = ger.id_gasto
+                    WHERE g.id_expensa IN (
+                        SELECT id_expensa FROM expensa
+                        WHERE id_consorcio = c.id_consorcio
+                          AND CONVERT(date, periodo + '-01') = @periodo_actual
+                    )
+                ), 0)
+            ) AS egresos,
+
+            --------------------------------------------------------------
+            -- SALDO DE CIERRE
+            --------------------------------------------------------------
+            (
+                -- saldo anterior
+                ISNULL((
+                    SELECT TOP 1 saldo_cierre
+                    FROM estadoFinanciero
+                    WHERE id_consorcio = c.id_consorcio
+                      AND periodo < @periodo_actual
+                    ORDER BY periodo DESC
+                ), 0)
+                +
+                -- ingresos totales
+                ISNULL((
+                    SELECT SUM(pg.importe)
+                    FROM pago pg
+                    JOIN estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                    JOIN expensa ex ON ec.id_expensa = ex.id_expensa
+                    WHERE ex.id_consorcio = c.id_consorcio
+                      AND CONVERT(date, ex.periodo + '-01') = @periodo_actual
+                ), 0)
+                -
+                -- egresos totales
+                (
+                    ISNULL((
+                        SELECT SUM(gor.importe)
+                        FROM gasto g
+                        JOIN gastoOrdinario gor ON g.id_gasto = gor.id_gasto
+                        WHERE g.id_expensa IN (
+                            SELECT id_expensa FROM expensa
+                            WHERE id_consorcio = c.id_consorcio
+                              AND CONVERT(date, periodo + '-01') = @periodo_actual
+                        )
+                    ), 0)
+                    +
+                    ISNULL((
+                        SELECT SUM(ger.importe)
+                        FROM gasto g
+                        JOIN gastoExtraordinario ger ON g.id_gasto = ger.id_gasto
+                        WHERE g.id_expensa IN (
+                            SELECT id_expensa FROM expensa
+                            WHERE id_consorcio = c.id_consorcio
+                              AND CONVERT(date, periodo + '-01') = @periodo_actual
+                        )
+                    ), 0)
+                )
+            ) AS saldo_cierre,
+
+            @periodo_actual
+
+        FROM consorcio c;
+
+        -------------------------------------------------------------------
+        -- Remover el período ya procesado
+        -------------------------------------------------------------------
+        DELETE FROM #periodos WHERE periodo_fecha = @periodo_actual;
+
+    END -- WHILE
+
+END;
+

@@ -7,7 +7,7 @@ DELETE FROM persona;
 DBCC CHECKIDENT ('persona', RESEED, 0);
 EXEC sp_importar_personas @RutaArchivoPersonas = @archivo_personas;
 GO
-select * from persona;
+--select * from persona;
 
 --CARGAR consorcio
 DECLARE @archivo_consorcios VARCHAR(255) = ''; --<-- datos varios 1(Consorcios).csv
@@ -61,7 +61,7 @@ select * from proveedor
 -- CARGAR expensa
 --DELETE FROM expensa;
 --DBCC CHECKIDENT ('expensa', RESEED, 0);
-DECLARE @periodo_mes_test VARCHAR(12) = ''; -- El mes que quieres generar (Abril, Mayo, Junio)
+DECLARE @periodo_mes_test VARCHAR(12) = 'Abril'; -- El mes que quieres generar (Abril, Mayo, Junio)
 DECLARE @anio_test INT = 2025;             -- El a�o
 
 -- 2. Ejecutar el Stored Procedure
@@ -91,7 +91,7 @@ GO
 select * from expensa
 order by id_expensa
 
--- CARGAR gasto
+------------------ CARGAR gasto
 DELETE FROM gasto;
 DBCC CHECKIDENT ('gasto', RESEED, 0);
 -- Ejecutar el Stored Procedure para inicializar la tabla Gasto
@@ -108,22 +108,21 @@ WHERE
     AND g.subtotal_extraordinarios IS NULL;
 select * from gasto
 
--- CARGAR gastoOrdinario
-DECLARE @archivo NVARCHAR(4000) = ''; --<-- Servicios.Servicios.json
-DELETE FROM gastoOrdinario;
-DBCC CHECKIDENT ('gastoOrdinario', RESEED, 0);
+------------------ CARGAR gastoOrdinario
+DECLARE @archivo NVARCHAR(4000) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\consorcios\Servicios.Servicios.json'; --<-- Servicios.Servicios.json
+
 EXEC sp_gastos_ordinarios @RutaArchivoJSON = @archivo;
 GO
 select * from gastoOrdinario
 
---CARGAR gastoExtraordinario
+-------------------CARGAR gastoExtraordinario
 DECLARE @archivo_gastosExtraordinarios VARCHAR(255) = ''; --<----RUTA DE ACCESO a gastos_extraordinarios.csv
 DELETE FROM gastoExtraordinario;
 DBCC CHECKIDENT ('gastoExtraordinario', RESEED, 0);
 EXEC sp_importar_gastosExtraordinarios @RutaArchivo = @archivo_gastosExtraordinarios;
 select * from gastoExtraordinario 
 
--- CARGAR subtotalOrdinario EN gasto
+------------------ CARGAR subtotalOrdinario EN gasto
 EXEC sp_calcularSubtotalesGastos;
 GO
 select * from gasto
@@ -147,45 +146,21 @@ ORDER BY
 GO
 */
 
-------------------------------------------
---------------------- TODO OKK HASTA ACA -
-------------------------------------------
 
--- CARGAR estadoCuentaProrrateo
+
+------------------------------ CARGAR estadoCuentaProrrateo
 -------------------------------------------------------------------------
 -- EJECUCION estadoCuentaProrrateo
--- VARIABLES DE PERÍODO: JUNIO 2025 (porque asi tenia cargada expensa)  EJECUTEN TODO JUNTO
--------------------------------------------------------------------------
-DECLARE @periodo_mes_eje VARCHAR(12) = 'Junio'; 
-DECLARE @anio_eje INT = 2025; 
-GO 
 
 -- Redeclaramos las variables para este lote
-DECLARE @periodo_mes_eje VARCHAR(12) = 'Junio'; 
+DECLARE @periodo_mes_eje VARCHAR(12) = ''; 
 DECLARE @anio_eje INT = 2025; 
 
 PRINT '--- 1. INICIANDO GENERACIÓN DE DEUDA (PRORRATEO)---';
 EXEC sp_generar_estadoCuentaProrrateo @periodo_mes = @periodo_mes_eje, @anio = @anio_eje;
 GO 
 select * from estadoCuentaProrrateo
-PRINT '--- 2. CARGANDO PAGOS DESDE EL ARCHIVO ---';
-
 GO 
-
-PRINT '--- 3. INICIANDO APLICACIÓN DE PAGOS Y CÁLCULO DE INTERESES ---';
-EXEC sp_asociar_y_aplicar_pagos;
-GO 
-
--- Redeclaramos las variables por última vez
-DECLARE @periodo_mes_eje VARCHAR(12) = 'Junio'; 
-DECLARE @anio_eje INT = 2025; 
-
-PRINT '--- 4. INICIANDO GENERACIÓN DE ESTADO FINANCIERO ---';
-EXEC sp_generar_estadoFinanciero @periodo_mes = @periodo_mes_eje, @anio = @anio_eje;
-GO
-
-PRINT '--- FLUJO DE PROCESAMIENTO FINALIZADO CON ÉXITO ---';
-
 
 DELETE FROM estadoCuentaProrrateo;
 DBCC CHECKIDENT ('estadoCuentaProrrateo', RESEED, 0);
@@ -204,3 +179,14 @@ SELECT * FROM pago;
 
 ------------------Recalcular tabla estadoCuentaProrrateo-------------------------
 EXEC sp_RecalcularSaldosYMoras;
+
+select * from estadoCuentaProrrateo
+
+
+-----------------------CALCULAR ESTADO FINANCIERO-------------------
+EXEC generarEstadoFinanciero
+
+select * from estadoFinanciero
+
+DELETE FROM estadoFinanciero;
+DBCC CHECKIDENT ('estadoFinanciero', RESEED, 0);
