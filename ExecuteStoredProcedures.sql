@@ -68,6 +68,7 @@ DECLARE @anio_test INT = 2025;             -- El a�o
 EXEC spGenerarExpensas    
     @periodo_mes = @periodo_mes_test,
     @anio = @anio_test;
+
 -- 3. Verificaci�n de Resultados
 SELECT 
     e.id_expensa,
@@ -155,7 +156,7 @@ GO
 -- EJECUCION estadoCuentaProrrateo
 -- VARIABLES DE PERÍODO: JUNIO 2025 (porque asi tenia cargada expensa)  EJECUTEN TODO JUNTO
 -------------------------------------------------------------------------
-DECLARE @periodo_mes_eje VARCHAR(12) = 'Junio'; 
+DECLARE @periodo_mes_eje VARCHAR(12) = 'Abril'; 
 DECLARE @anio_eje INT = 2025; 
 GO 
 
@@ -166,7 +167,7 @@ DECLARE @anio_eje INT = 2025;
 PRINT '--- 1. INICIANDO GENERACIÓN DE DEUDA (PRORRATEO)---';
 EXEC sp_generar_estadoCuentaProrrateo @periodo_mes = @periodo_mes_eje, @anio = @anio_eje;
 GO 
-
+select * from estadoCuentaProrrateo
 PRINT '--- 2. CARGANDO PAGOS DESDE EL ARCHIVO ---';
 
 GO 
@@ -184,3 +185,22 @@ EXEC sp_generar_estadoFinanciero @periodo_mes = @periodo_mes_eje, @anio = @anio_
 GO
 
 PRINT '--- FLUJO DE PROCESAMIENTO FINALIZADO CON ÉXITO ---';
+
+
+DELETE FROM estadoCuentaProrrateo;
+DBCC CHECKIDENT ('estadoCuentaProrrateo', RESEED, 0);
+
+
+----------------------ASOCIAR PAGOS A ESADOCUENTAPRORRATEO----------------------------
+EXEC sp_AsociarPagosAEstadoCuenta;
+
+UPDATE pago
+SET 
+    asociado = 'NO',
+    id_detalleDeCuenta = NULL;
+
+-- (Opcional) Verifica los cambios
+SELECT * FROM pago;
+
+------------------Recalcular tabla estadoCuentaProrrateo-------------------------
+EXEC sp_RecalcularSaldosYMoras;

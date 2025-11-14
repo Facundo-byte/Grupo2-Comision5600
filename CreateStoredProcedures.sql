@@ -829,8 +829,8 @@ BEGIN
     ProrrateoCalculado AS (
         SELECT
             de.id_expensa, de.id_uf, sa.SaldoAnteriorCalculado AS saldo_anterior,
-            (de.subtotal_ordinarios * de.coeficiente) AS expensas_ordinarias,
-            (de.subtotal_extraordinarios * de.coeficiente) AS expensas_extraordinarias
+            de.subtotal_ordinarios * (de.coeficiente/100) AS expensas_ordinarias,
+            de.subtotal_extraordinarios * (de.coeficiente/100) AS expensas_extraordinarias
         FROM DatosExpensa de
         INNER JOIN SaldoAnterior sa ON de.id_uf = sa.id_uf
     )
@@ -856,8 +856,10 @@ BEGIN
 
 END
 GO
+
+select * from estadoCuentaProrrateo
 -------------------- ACTUALIZAR PAGO ------------------------
-CREATE OR ALTER PROCEDURE sp_asociar_y_aplicar_pagos
+/*CREATE OR ALTER PROCEDURE sp_asociar_y_aplicar_pagos
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -928,7 +930,147 @@ BEGIN
     PRINT 'Proceso de asociación y aplicación de pagos completado';
 
 END
+GO*/
+
+CREATE OR ALTER PROCEDURE sp_AsociarPagosAEstadoCuenta
+AS
+BEGIN
+    -- Evita que se devuelvan mensajes de conteo de filas (SET NOCOUNT ON)
+    SET NOCOUNT ON; 
+
+    -- Declarar variables para seguimiento
+    DECLARE @PagosAsociados INT = 0;
+
+    -- Paso 1: Actualizar la tabla 'pago' para asociar los pagos a un 'estadoCuentaProrrateo'
+    -- Se añade la condición de que el AÑO y el MES del pago (P.fecha) 
+    -- deben coincidir con el AÑO y el MES de emisión de la expensa (ECP.fecha_emision).
+    UPDATE P
+    SET 
+        P.asociado = 'SI',
+        P.id_detalleDeCuenta = ECP.id_detalleDeCuenta
+    FROM 
+        pago P
+    INNER JOIN 
+        unidadFuncional UF ON P.cuenta_origen = UF.cuenta_origen
+    INNER JOIN 
+        estadoCuentaProrrateo ECP ON UF.id_uf = ECP.id_uf
+    WHERE 
+        P.asociado = 'NO' -- Solo pagos no asociados
+        AND P.id_detalleDeCuenta IS NULL -- Aseguramos que no tenga asociación previa
+        
+        -- Lógica de comparación de Periodo (Año y Mes) solicitada:
+        -- Asocia el pago a la expensa emitida en el MISMO mes y año del pago.
+        AND YEAR(P.fecha) = YEAR(ECP.fecha_emision)
+        AND MONTH(P.fecha) = MONTH(ECP.fecha_emision);
+
+    -- Capturar el número de filas actualizadas
+    SET @PagosAsociados = @@ROWCOUNT;
+
+    -- Paso 2: Actualizar la tabla 'estadoCuentaProrrateo' con los pagos recibidos
+    -- Se suma el importe de los pagos recién asociados (y los previamente asociados) 
+    -- al campo 'pagos_recibidos' de la cuenta corriente.
+    UPDATE ECP
+    SET 
+        ECP.pagos_recibidos = ISNULL(ECP.pagos_recibidos, 0) + P.importe
+    FROM 
+        estadoCuentaProrrateo ECP
+    INNER JOIN 
+        pago P ON ECP.id_detalleDeCuenta = P.id_detalleDeCuenta
+    WHERE
+        P.id_detalleDeCuenta IS NOT NULL; -- Solo registros que tienen una asociación.
+
+    -- Retornar el número de pagos asociados
+    SELECT @PagosAsociados AS PagosAsociadosExitosamente;
+
+END
 GO
+-------------------------Recalcular tabla estadoCuentaProrrateo------------------
+
+CREATE OR ALTER FUNCTION fn_CalcularInteresMora_Nuevo (
+    @p_saldo_pendiente DECIMAL(10,2),
+    @p_fecha_1er_venc DATE,
+    @p_fecha_2do_venc DATE,
+    @p_fecha_calculo DATE
+)
+RETURNS DECIMAL(10,2)
+AS
+BEGIN
+    DECLARE @Interes DECIMAL(10,2) = 0.00;
+    
+    IF @p_saldo_pendiente <= 0
+        RETURN 0.00; -- No hay mora si no hay saldo pendiente
+
+    -- Caso 1: Después del 2do Vencimiento (5%)
+    IF @p_fecha_calculo > @p_fecha_2do_venc
+    BEGIN
+        SET @Interes = @p_saldo_pendiente * 0.05;
+    END
+    -- Caso 2: Después del 1er Vencimiento y hasta el 2do Vencimiento (2%)
+    ELSE IF @p_fecha_calculo > @p_fecha_1er_venc
+    BEGIN
+        -- Nota: La mora del 2% se suele aplicar al monto Ordinario/Total (no solo al saldo pendiente).
+        -- Para simplificar y seguir la lógica de aplicar mora al "saldo pendiente" (Deuda),
+        -- aplicaremos el 2% a ese saldo pendiente.
+        SET @Interes = @p_saldo_pendiente * 0.02; 
+    END
+
+    RETURN @Interes;
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_RecalcularSaldosYMoras
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Se utiliza la fecha actual para determinar si aplica mora
+    DECLARE @FechaCalculo DATE = GETDATE();
+
+    -- 1. Actualizar DEUDA e INTERES_POR_MORA para *TODAS* las expensas
+    -- La lógica de mora se aplica sobre el SALDO PENDIENTE (Total a Pagar Inicial - Pagos Recibidos)
+
+    UPDATE ECP
+    SET
+        -- 1a. Calcular el SALDO PENDIENTE (Deuda) 
+        -- Nota: Usamos la columna 'deuda' para guardar el saldo final adeudado.
+        ECP.deuda = ECP.total_pagar - ISNULL(ECP.pagos_recibidos, 0),
+        
+        -- 1b. Calcular el nuevo INTERÉS POR MORA
+        -- Se aplica mora solo si el pago fue menor que el total a pagar
+        ECP.interes_por_mora = 
+            CASE
+                -- Si hay un saldo pendiente (Deuda)
+                WHEN ECP.total_pagar > ISNULL(ECP.pagos_recibidos, 0) THEN
+                    -- Se llama a la función de mora para calcular el interés
+                    dbo.fn_CalcularInteresMora_Nuevo(
+                        ECP.total_pagar - ISNULL(ECP.pagos_recibidos, 0), -- Monto a aplicar la mora (Deuda)
+                        ECP.fecha_1er_venc,
+                        ECP.fecha_2do_venc,
+                        @FechaCalculo
+                    )
+                ELSE
+                    0.00 -- Si se pagó por completo o de más, la mora es cero
+            END
+    FROM
+        estadoCuentaProrrateo ECP; -- Aplica a TODAS las filas
+
+    -- 2. Actualizar TOTAL A PAGAR (Total Pagar Final) para *TODAS* las expensas
+    
+    UPDATE ECP
+    SET
+        -- Total a pagar = Deuda Pendiente (calculada en el paso 1) + Interés por Mora (calculado en el paso 1)
+        ECP.total_pagar = ECP.deuda + ECP.interes_por_mora
+    FROM
+        estadoCuentaProrrateo ECP; -- Aplica a TODAS las filas
+
+    PRINT 'Recálculo de saldos y moras completado para TODAS las expensas cargadas.';
+
+END
+GO
+
+
+
+
 ------------------- ESTADO FINANCIERO -----------------------------
 CREATE OR ALTER PROCEDURE sp_generar_estadoFinanciero
     @periodo_mes VARCHAR(12),
@@ -1016,4 +1158,3 @@ GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------------------------
-
