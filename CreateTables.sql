@@ -31,9 +31,14 @@ create table pago (
 	id_pago int identity(1,1) primary key not null,
 	fecha date,
 	cuenta_origen varchar(50),
-	importe decimal(10,2),
+	importe decimal(13,2),
 	asociado char(2) not null,
-    id_detalleDeCuenta int null);
+    id_detalleDeCuenta int null
+    constraint fk_pago_detalleDeCuenta 
+    foreign key(id_detalleDeCuenta) references estadoCuentaProrrateo(id_detalleDeCuenta),
+    CONSTRAINT chk_pago_cuentaOrigen CHECK (ISNUMERIC(cuenta_origen) = 1),
+    CONSTRAINT chk_pago_importe CHECK (importe > 0),
+    );
 go 
 
 create table consorcio (
@@ -120,7 +125,6 @@ create table estadoCuentaProrrateo (
 	id_detalleDeCuenta int identity (1,1) primary key,
 	id_expensa int,
 	id_uf int,
-	id_pago int,
 	fecha_emision date,
 	fecha_1er_venc date,
 	fecha_2do_venc date,
@@ -135,8 +139,8 @@ create table estadoCuentaProrrateo (
 	foreign key (id_expensa) references expensa (id_expensa),
 	constraint fk_estadoCuentaProrrateo_id_uf
 	foreign key (id_uf) references unidadFuncional (id_uf),
-	constraint fk_estadoCuentaProrrateo_id_pago
-	foreign key (id_pago) references pago (id_pago));
+	CONSTRAINT uq_detalle_expensa_unica UNIQUE (id_expensa, id_uf),
+    );
 go  
 
 create table gastoOrdinario (

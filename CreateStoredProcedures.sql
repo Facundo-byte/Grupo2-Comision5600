@@ -316,12 +316,13 @@ SET @sql_dinamico_pagos =
  --  Convertir la fecha a formato DATE.
 
 
- INSERT INTO pago (fecha, cuenta_origen, importe, asociado)
+ INSERT INTO pago (fecha, cuenta_origen, importe, asociado, id_detalleDeCuenta)
 SELECT
 TRY_CONVERT(DATE, t.fecha, 103), -- Formato 103: dd/mm/yyyy
  REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', ''),
 CAST(REPLACE(REPLACE(REPLACE(t.Valor, '$', ''), ' ', ''), '.', '') AS DECIMAL(10, 2)),
-'NO' -- Valor por defecto. Se podr�a actualizar a 'SI' cuando se genere la Expensa/EstadoCuentaProrrateo (creo)
+'NO', -- Valor por defecto. Se podr�a actualizar a 'SI' cuando se genere la Expensa/EstadoCuentaProrrateo
+ NULL AS id_detalleDeCuenta
  FROM
  #tempPago t
  WHERE
@@ -835,12 +836,12 @@ BEGIN
     )
     -- Insertar el Prorrateo en la tabla de destino
     INSERT INTO estadoCuentaProrrateo (
-        id_expensa, id_uf, id_pago, fecha_emision, fecha_1er_venc, fecha_2do_venc,
+        id_expensa, id_uf, fecha_emision, fecha_1er_venc, fecha_2do_venc,
         saldo_anterior, pagos_recibidos, deuda, interes_por_mora, expensas_ordinarias,
         expensas_extraordinarias, total_pagar 
     )
     SELECT
-        pc.id_expensa, pc.id_uf, NULL AS id_pago, @fecha_emision, @fecha_1er_venc, @fecha_2do_venc,
+        pc.id_expensa, pc.id_uf, @fecha_emision, @fecha_1er_venc, @fecha_2do_venc,
         pc.saldo_anterior, 0.00 AS pagos_recibidos, 
         pc.saldo_anterior + pc.expensas_ordinarias + pc.expensas_extraordinarias AS deuda_inicial,
         0.00 AS interes_por_mora, 
