@@ -1,4 +1,16 @@
-﻿-- NOTA! Ejecutar uno por uno, y dos veces c/u por el IDENTITY que empieza en 0 algunas veces.
+﻿/*
+Comisión:         02-5600
+Grupo:            G02
+Integrantes:
+    - DE LA FUENTE SILVA, CELESTE (45315259)
+    - FERNANDEZ MARISCAL, AGUSTIN (45614233)
+    - GAUTO, JUAN BAUTISTA (45239479)
+*/
+
+--------------------------------------------------------------------------------
+use Com5600G02
+GO
+-- NOTA! Ejecutar uno por uno, y dos veces c/u por el IDENTITY que empieza en 0 algunas veces.
 
 
 --CARGAR persona
@@ -7,7 +19,7 @@ DELETE FROM persona;
 DBCC CHECKIDENT ('persona', RESEED, 0);
 EXEC sp_importar_personas @RutaArchivoPersonas = @archivo_personas;
 GO
---select * from persona;
+select * from persona;
 
 --CARGAR consorcio
 DECLARE @archivo_consorcios VARCHAR(255) = ''; --<-- datos varios 1(Consorcios).csv

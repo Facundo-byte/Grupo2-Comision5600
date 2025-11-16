@@ -1,4 +1,17 @@
-﻿-- NOTA! Se puede ejectuar todo de una
+﻿/*
+Comisión:         02-5600
+Grupo:            G02
+Integrantes:
+    - DE LA FUENTE SILVA, CELESTE (45315259)
+    - FERNANDEZ MARISCAL, AGUSTIN (45614233)
+    - GAUTO, JUAN BAUTISTA (45239479)
+*/
+
+--------------------------------------------------------------------------------
+use Com5600G02
+GO
+
+-- NOTA! Se puede ejectuar todo de una
 
 drop table if exists estadoFinanciero 
 go
@@ -27,20 +40,6 @@ go
 drop table if exists consorcio
 go 
 --------------------------------------------------
-create table pago (
-	id_pago int identity(1,1) primary key not null,
-	fecha date,
-	cuenta_origen varchar(50),
-	importe decimal(13,2),
-	asociado char(2) not null,
-    id_detalleDeCuenta int null
-    constraint fk_pago_detalleDeCuenta 
-    foreign key(id_detalleDeCuenta) references estadoCuentaProrrateo(id_detalleDeCuenta),
-    CONSTRAINT chk_pago_cuentaOrigen CHECK (ISNUMERIC(cuenta_origen) = 1),
-    CONSTRAINT chk_pago_importe CHECK (importe > 0),
-    );
-go 
-
 create table consorcio (
 	id_consorcio int identity(1,1) primary key,
 	nombre varchar(35),
@@ -143,6 +142,19 @@ create table estadoCuentaProrrateo (
 	CONSTRAINT uq_detalle_expensa_unica UNIQUE (id_expensa, id_uf),
     );
 go  
+create table pago (
+	id_pago int identity(1,1) primary key not null,
+	fecha date,
+	cuenta_origen varchar(50),
+	importe decimal(13,2),
+	asociado char(2) not null,
+    id_detalleDeCuenta int null
+    constraint fk_pago_detalleDeCuenta 
+    foreign key(id_detalleDeCuenta) references estadoCuentaProrrateo(id_detalleDeCuenta),
+    CONSTRAINT chk_pago_cuentaOrigen CHECK (ISNUMERIC(cuenta_origen) = 1),
+    CONSTRAINT chk_pago_importe CHECK (importe > 0),
+    );
+go 
 
 create table gastoOrdinario (
 	id_gastoOrdinario int identity(1,1) primary key,
