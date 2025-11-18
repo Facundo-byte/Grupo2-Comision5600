@@ -5,6 +5,8 @@ Integrantes:
     - DE LA FUENTE SILVA, CELESTE (45315259)
     - FERNANDEZ MARISCAL, AGUSTIN (45614233)
     - GAUTO, JUAN BAUTISTA (45239479)
+
+Enunciado:        "Creación de Reportes y APIs"
 */
 
 --------------------------------------------------------------------------------
@@ -24,7 +26,7 @@ GO
 -- REPORTE 1
 -- flujo de caja en forma semanal
 
-CREATE OR ALTER PROCEDURE SP_Reporte_1_FlujoCajaSemanal
+CREATE OR ALTER PROCEDURE rep.SP_Reporte_1_FlujoCajaSemanal
     @idConsorcio INT,
     @FechaInicio DATE,
     @FechaFin DATE
@@ -53,13 +55,13 @@ BEGIN
                 END AS PagoExtraordinario
                 
             FROM
-                pago p
+                consorcio.pago p
             -- Unir a estadoCuentaProrrateo (ec)
             JOIN
-                estadoCuentaProrrateo ec ON p.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                consorcio.estadoCuentaProrrateo ec ON p.id_detalleDeCuenta = ec.id_detalleDeCuenta
             -- Unir a expensa (e) para obtener el id_consorcio (el pago es de una UF, la UF pertenece a una expensa, la expensa tiene id_consorcio)
             JOIN
-                expensa e ON ec.id_expensa = e.id_expensa
+                consorcio.expensa e ON ec.id_expensa = e.id_expensa
             
             WHERE
                 e.id_consorcio = @idConsorcio
@@ -113,7 +115,7 @@ GO
 -- REPORTE 2
 --  total de recaudación por mes y departamento en formato de tabla cruzada. 
 
-CREATE OR ALTER PROCEDURE SP_Reporte_2_Recaudacion
+CREATE OR ALTER PROCEDURE rep.SP_Reporte_2_Recaudacion
     @idConsorcio INT,
     @Anio INT,
     @Piso VARCHAR(3) = NULL 
@@ -173,11 +175,11 @@ BEGIN
             ISNULL(SUM(CASE WHEN uf.depto = 'E' THEN p.importe END), 0.00) AS E
            
         FROM 
-            pago AS p
+            consorcio.pago AS p
         -- Unión a estadoCuentaProrrateo usando id_detalleDeCuenta
-        INNER JOIN estadoCuentaProrrateo AS ec ON p.id_detalleDeCuenta = ec.id_detalleDeCuenta
+        INNER JOIN consorcio.estadoCuentaProrrateo AS ec ON p.id_detalleDeCuenta = ec.id_detalleDeCuenta
         -- Unión a unidadFuncional para obtener el departamento y el consorcio
-        INNER JOIN unidadFuncional AS uf ON ec.id_uf = uf.id_uf
+        INNER JOIN consorcio.unidadFuncional AS uf ON ec.id_uf = uf.id_uf
         WHERE
             uf.id_consorcio = @idConsorcio -- Filtro por consorcio
             AND YEAR(p.fecha) = @Anio      -- Filtro por año de pago
@@ -219,7 +221,7 @@ GO
 
 -- REPORTE 3
 -- cuadro cruzado con la recaudación total desagregada según su procedencia 
-CREATE OR ALTER PROCEDURE SP_Reporte_3_RecaudacionTipoPeriodo
+CREATE OR ALTER PROCEDURE rep.SP_Reporte_3_RecaudacionTipoPeriodo
     @idConsorcio INT,
     @PeriodoInicio VARCHAR(7), 
     @PeriodoFin VARCHAR(7)     
@@ -241,7 +243,7 @@ BEGIN
         SELECT DISTINCT 
             QUOTENAME(e.periodo) AS ColumnaPeriodo,
             e.periodo AS PeriodoOrden
-        FROM expensa e
+        FROM consorcio.expensa e
         WHERE e.id_consorcio = @idConsorcio
           AND e.periodo IS NOT NULL
           AND e.periodo BETWEEN @PeriodoInicio AND @PeriodoFin
@@ -265,8 +267,8 @@ BEGIN
             T.TipoIngreso,
             -- Sumamos los conceptos para todas las unidades funcionales de esa expensa/periodo
             SUM(T.Importe) AS Importe
-        FROM estadoCuentaProrrateo ec
-        JOIN expensa e ON ec.id_expensa = e.id_expensa
+        FROM consorcio.estadoCuentaProrrateo ec
+        JOIN consorcio.expensa e ON ec.id_expensa = e.id_expensa
         
         -- CROSS APPLY para des-pivotear y calcular el Total Recaudación
         CROSS APPLY (
@@ -317,7 +319,7 @@ GO
 -- REPORTE 4
 -- meses de mayores gastos y mayores ingresos
 
-CREATE OR ALTER PROCEDURE sp_Reporte_4_Top2Movimientos
+CREATE OR ALTER PROCEDURE rep.sp_Reporte_4_Top5Movimientos
     @ConsorcioID INT,           
     @PeriodoInicio VARCHAR(7),  
     @PeriodoFin VARCHAR(7)      
@@ -328,12 +330,12 @@ BEGIN
     -- El SP devuelve una única celda con la estructura XML que contiene ambos reportes
     SELECT 
         (
-            -- TOP 2 Mayores GASTOS en XML
-            SELECT TOP 2 
+            -- TOP 5 Mayores GASTOS en XML
+            SELECT TOP 5 
                 e.periodo AS Mes,
                 SUM(g.subtotal_ordinarios + g.subtotal_extraordinarios) AS Total_Gasto
-            FROM gasto g
-            INNER JOIN expensa e ON g.id_expensa = e.id_expensa
+            FROM consorcio.gasto g
+            INNER JOIN consorcio.expensa e ON g.id_expensa = e.id_expensa
             WHERE e.id_consorcio = @ConsorcioID
               AND e.periodo >= @PeriodoInicio 
               AND e.periodo <= @PeriodoFin
@@ -344,12 +346,12 @@ BEGIN
         ) AS Egresos,
 
         (
-            -- TOP 2 Mayores INGRESOS en XML
-            SELECT TOP 2
+            -- TOP 5 Mayores INGRESOS en XML
+            SELECT TOP 5
                 CONCAT(YEAR(p.fecha), '-', FORMAT(p.fecha, 'MM')) AS Mes,
                 SUM(p.importe) AS Total_Ingreso
-            FROM pago p
-            INNER JOIN unidadFuncional uf ON p.cuenta_origen = uf.cuenta_origen
+            FROM consorcio.pago p
+            INNER JOIN consorcio.unidadFuncional uf ON p.cuenta_origen = uf.cuenta_origen
             WHERE uf.id_consorcio = @ConsorcioID
               AND CONCAT(YEAR(p.fecha), '-', FORMAT(p.fecha, 'MM')) >= @PeriodoInicio 
               AND CONCAT(YEAR(p.fecha), '-', FORMAT(p.fecha, 'MM')) <= @PeriodoFin
@@ -369,7 +371,7 @@ GO
 -- REPORTE 5
 -- propietarios con mayor morosidad
 
-CREATE OR ALTER PROCEDURE SP_Reporte_5_Top3Morosos
+CREATE OR ALTER PROCEDURE rep.SP_Reporte_5_Top3Morosos
     @idConsorcio INT = NULL -- Consorcio opcional, por si se quiere filtrar el ranking
 AS
 BEGIN
@@ -383,16 +385,16 @@ BEGIN
         p.telefono_contacto AS TelefonoContacto,
         SUM(ec.deuda) AS Deuda_Total_Acumulada
     FROM
-        persona p
+        consorcio.persona p
     -- Unir a personaUf usando DNI
     JOIN
-        personaUf puf ON p.dni = puf.dni_persona
+        consorcio.personaUf puf ON p.dni = puf.dni_persona
     -- Unir a unidadFuncional (UF)
     JOIN
-        unidadFuncional uf ON puf.id_uf = uf.id_uf
+        consorcio.unidadFuncional uf ON puf.id_uf = uf.id_uf
     -- Unir a estadoCuentaProrrateo (EC) para obtener la deuda
     JOIN
-        estadoCuentaProrrateo ec ON uf.id_uf = ec.id_uf
+        consorcio.estadoCuentaProrrateo ec ON uf.id_uf = ec.id_uf
     WHERE
         -- Filtro: Solo propietarios (según tu tabla personaUf)
         puf.tipo_responsable = 'propietario' 
@@ -417,7 +419,7 @@ GO
 -- echas de pagos de expensas ordinarias de cada UF y la cantidad de días que 
 --pasan entre un pago y el siguiente
 
-CREATE OR ALTER PROCEDURE SP_Reporte_6_PeriodicidadPagosUF
+CREATE OR ALTER PROCEDURE rep.SP_Reporte_6_PeriodicidadPagosUF
     @idConsorcio INT,
     @FechaDesde DATE = NULL,
     @FechaHasta DATE = NULL
@@ -438,16 +440,16 @@ BEGIN
             LAG(p.fecha, 1, NULL) OVER (PARTITION BY uf.id_uf ORDER BY p.fecha) AS FechaPagoAnterior
             
         FROM
-            pago AS p 
+            consorcio.pago AS p 
         -- Unir a estadoCuentaProrrateo (EC) para obtener la UF asociada al pago
         JOIN 
-            estadoCuentaProrrateo AS ec ON p.id_detalleDeCuenta = ec.id_detalleDeCuenta
+            consorcio.estadoCuentaProrrateo AS ec ON p.id_detalleDeCuenta = ec.id_detalleDeCuenta
         -- Unir a unidadFuncional (UF) para obtener los datos de la unidad y el consorcio
         JOIN 
-            unidadFuncional AS uf ON ec.id_uf = uf.id_uf
+            consorcio.unidadFuncional AS uf ON ec.id_uf = uf.id_uf
         -- Unir a consorcio (C) para obtener el nombre
         JOIN 
-            consorcio AS c ON uf.id_consorcio = c.id_consorcio
+            consorcio.consorcio AS c ON uf.id_consorcio = c.id_consorcio
         
         WHERE
             -- Filtro obligatorio por Consorcio

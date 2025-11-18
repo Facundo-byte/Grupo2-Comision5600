@@ -5,8 +5,9 @@ Integrantes:
     - DE LA FUENTE SILVA, CELESTE (45315259)
     - FERNANDEZ MARISCAL, AGUSTIN (45614233)
     - GAUTO, JUAN BAUTISTA (45239479)
-*/
 
+Enunciado:        "Creación de Base de Datos"
+*/
 --------------------------------------------------------------------------------
 create database Com5600G02
 go 

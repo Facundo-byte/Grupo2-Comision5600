@@ -5,19 +5,24 @@ Integrantes:
     - DE LA FUENTE SILVA, CELESTE (45315259)
     - FERNANDEZ MARISCAL, AGUSTIN (45614233)
     - GAUTO, JUAN BAUTISTA (45239479)
-*/
 
---------------------------------------------------------------------------------
-use Com5600G02
-GO
--- NOTA! Se puede ejectuar todo de una
+Enunciado:        "Creación de Procedimientos Almacenados para la importación de datos"
+*/
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------  STORED PROCEDURES  ---------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------
+use Com5600G02
+go
 
 --CARGAR PERSONAS
-CREATE OR ALTER PROCEDURE sp_importar_personas
+IF OBJECT_ID('consorcio.sp_importar_personas') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_importar_personas;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_importar_personas
     @RutaArchivoPersonas VARCHAR(255)  -- Par�metro de entrada para la ruta del archivo
 AS
 BEGIN
@@ -53,20 +58,26 @@ BEGIN
     )
     DELETE FROM cte_sin_duplicados WHERE fila > 1;
   
-    INSERT INTO persona (nombre, apellido, dni, email_personal, telefono_contacto, cuenta)
+    INSERT INTO consorcio.persona (nombre, apellido, dni, email_personal, telefono_contacto, cuenta)
 	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(apellido))), LTRIM(RTRIM(dni)), 
 		LOWER(REPLACE(LTRIM(RTRIM(email_personal)), ' ', '')), LTRIM(RTRIM(telefono_contacto)), REPLACE(LTRIM(RTRIM(cuenta)), ' ', '')
 	FROM #tempPersona t
    WHERE 
-        ISNULL(dni, '') <> ''  -- Evita DNIs vac�os
-        AND NOT EXISTS (SELECT 1 FROM persona p WHERE p.dni = t.dni); -- Evita duplicados
+        ISNULL(dni, '') <> ''  -- Evita DNIs vacios
+        AND NOT EXISTS (SELECT 1 FROM consorcio.persona p WHERE p.dni = t.dni); -- Evita duplicados
 END;
 GO
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
---CARGAR CONSORCIOS 
-CREATE OR ALTER PROCEDURE sp_importar_consorcios
+--CARGAR CONSORCIOS
+IF OBJECT_ID('consorcio.sp_importar_consorcios') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_importar_consorcios;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_importar_consorcios
     @RutaArchivo VARCHAR(255)  -- Par�metro de entrada para la ruta del archivo
 AS
 BEGIN
@@ -95,17 +106,23 @@ BEGIN
 
     -- Insertar en la tabla final consorcio con transformaciones
     -- Nota: Aqu� se asume que la tabla 'consorcio' no admite duplicados (lo que debes validar)
-    INSERT INTO consorcio (nombre, direccion, cant_uf, cant_m2)
+    INSERT INTO consorcio.consorcio (nombre, direccion, cant_uf, cant_m2)
 	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(direccion))), cant_uf, cant_m2
 	FROM #tempConsorcio 
 
-END
+END;
 GO
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 --CARGAR UF
-CREATE or ALTER PROCEDURE sp_importar_uf
+IF OBJECT_ID('consorcio.sp_importar_uf') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_importar_uf;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_importar_uf
     @RutaArchivoUF VARCHAR(255)  -- Par�metro de entrada para la ruta del archivo
 AS
 BEGIN
@@ -140,19 +157,25 @@ BEGIN
 
     -- Insertar en la tabla final unidadfuncional con transformaciones
     -- Nota: Aqu� se asume que la tabla 'unidadfuncional' no admite duplicados 
-    INSERT INTO unidadFuncional (id_consorcio, numero_uf, piso, depto, cochera, cochera_m2, baulera, baulera_m2, cant_m2, coeficiente)
+    INSERT INTO consorcio.unidadFuncional (id_consorcio, numero_uf, piso, depto, cochera, cochera_m2, baulera, baulera_m2, cant_m2, coeficiente)
 	SELECT    UPPER(c.id_consorcio), CAST(u.numero_uf AS INT), CAST(u.piso AS varchar(3)), CAST(u.depto as varchar(5)), 
         CASE WHEN u.cochera = 'SI' THEN 1 ELSE 0 END, CAST(u.cochera_m2 AS INT), CASE WHEN u.baulera = 'SI' THEN 1 ELSE 0 END, 
         CAST(u.baulera_m2 as INT), CAST(u.uf_m2 AS INT), CAST(REPLACE(u.coeficiente, ',', '.') AS decimal (2,1))
 	FROM #tempUf u
-	JOIN consorcio c ON c.nombre = u.nombre_consorcio;
+	JOIN consorcio.consorcio c ON c.nombre = u.nombre_consorcio;
 END;
 GO
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- CARGAR cuenta_origen EN unidadFuncional
-CREATE OR ALTER PROCEDURE sp_asociar_cuentas_uf
+IF OBJECT_ID('consorcio.sp_asociar_cuentas_uf') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_asociar_cuentas_uf;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_asociar_cuentas_uf
     @RutaArchivoCuentas VARCHAR(255) 
 AS
 BEGIN
@@ -185,9 +208,9 @@ BEGIN
     SET 
         uf.cuenta_origen = t.CVU_CBU
     FROM 
-        unidadFuncional uf
+        consorcio.unidadFuncional uf
     INNER JOIN 
-        consorcio c ON uf.id_consorcio = c.id_consorcio 
+        consorcio.consorcio c ON uf.id_consorcio = c.id_consorcio 
     INNER JOIN 
         #tempCuentasUF t ON 
             UPPER(t.NombreConsorcio) = UPPER(c.nombre) AND 
@@ -205,8 +228,13 @@ GO
 -- Este SP necesita dos archivos para cruzar la informaci�n:
 -- 1. El archivo de relaci�n UF-CVU/CBU (Inquilino-propietarios-UF.csv)
 -- 2. El archivo de datos de Persona (Inquilino-propietarios-datos.csv)
+IF OBJECT_ID('consorcio.sp_importar_persona_uf') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_importar_persona_uf;
+END
+GO
 
-CREATE OR ALTER PROCEDURE sp_importar_persona_uf
+CREATE PROCEDURE consorcio.sp_importar_persona_uf
     @RutaArchivoRelacionUF VARCHAR(255), -- (delimitador '|')
     @RutaArchivoDatosPersona VARCHAR(255) -- (delimitador ';')
 AS
@@ -257,7 +285,7 @@ BEGIN
     EXEC sp_executesql @sql_dinamico_per;
 
     -- Insertar en personaUf (JOIN múltiple)
-    INSERT INTO personaUf (dni_persona, id_uf, fecha_desde, fecha_hasta, tipo_responsable)
+    INSERT INTO consorcio.personaUf (dni_persona, id_uf, fecha_desde, fecha_hasta, tipo_responsable)
     SELECT
         p.dni, 
         uf.id_uf,
@@ -271,13 +299,13 @@ BEGIN
         INNER JOIN #tempPersonaStatus tps 
             ON REPLACE(LTRIM(RTRIM(truf.CVU_CBU)), ' ', '') = REPLACE(LTRIM(RTRIM(tps.Cuenta)), ' ', '')
         -- Unir con la tabla Persona para asegurar la existencia del DNI
-        INNER JOIN persona p 
+        INNER JOIN consorcio.persona p 
             ON p.dni = LTRIM(RTRIM(tps.DNI))
         -- Unir con la tabla Consorcio
-        INNER JOIN consorcio c 
+        INNER JOIN consorcio.consorcio c 
             ON c.nombre = truf.Nombre_Consorcio
         -- Unir con la tabla Unidad Funcional para obtener el id_uf
-        INNER JOIN unidadFuncional uf 
+        INNER JOIN consorcio.unidadFuncional uf 
             ON uf.id_consorcio = c.id_consorcio 
             AND uf.numero_uf = CAST(truf.nroUnidadFuncional AS INT)
             AND uf.piso = truf.piso 
@@ -286,7 +314,7 @@ BEGIN
         -- Evitar duplicados ya insertados (si se ejecuta el SP varias veces)
         NOT EXISTS (
             SELECT 1
-            FROM personaUf pu
+            FROM consorcio.personaUf pu
             WHERE pu.dni_persona = p.dni
               AND pu.id_uf = uf.id_uf
               AND pu.fecha_hasta IS NULL -- Solo consideramos las relaciones activas
@@ -298,7 +326,13 @@ GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- CARGAR PAGO
-CREATE OR ALTER PROCEDURE sp_importar_pagos
+IF OBJECT_ID('consorcio.sp_importar_pagos') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_importar_pagos;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_importar_pagos
 @RutaArchivoPagos VARCHAR(255)
 AS
 BEGIN
@@ -328,7 +362,7 @@ SET @sql_dinamico_pagos =
  --  Convertir la fecha a formato DATE.
 
 
- INSERT INTO pago (fecha, cuenta_origen, importe, asociado, id_detalleDeCuenta)
+ INSERT INTO consorcio.pago (fecha, cuenta_origen, importe, asociado, id_detalleDeCuenta)
 SELECT
 TRY_CONVERT(DATE, t.fecha, 103), -- Formato 103: dd/mm/yyyy
  REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', ''),
@@ -343,7 +377,7 @@ AND TRY_CONVERT(DATE, t.fecha, 103) IS NOT NULL -- Solo importamos si la fecha e
  -- Evitar duplicados (mismo CVU/CBU, misma fecha, mismo importe)
 AND NOT EXISTS (
  SELECT 1
- FROM pago p
+ FROM consorcio.pago p
 WHERE
 p.cuenta_origen = REPLACE(LTRIM(RTRIM(t.CVU_CBU)), ' ', '') AND
  p.fecha = TRY_CONVERT(DATE, t.fecha, 103) AND
@@ -356,7 +390,13 @@ GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- IMPORTAR PROVEEDORES
-CREATE OR ALTER PROCEDURE sp_importar_proveedores
+IF OBJECT_ID('consorcio.sp_importar_proveedores') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_importar_proveedores;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_importar_proveedores
  @RutaArchivoProveedores VARCHAR(255)
 AS
 BEGIN
@@ -385,18 +425,25 @@ BEGIN
 --  Convertir la fecha a formato DATE.
 
 
- INSERT INTO proveedor (id_consorcio, tipo_gasto, nombre_empresa, alias)
+ INSERT INTO consorcio.proveedor (id_consorcio, tipo_gasto, nombre_empresa, alias)
  SELECT 
 		c.id_consorcio, p.tipo_gasto, p.nombre_empresa, p.alias
     FROM
-		consorcio c INNER JOIN #tempProveedor p ON c.nombre = p.nombre_consorcio
+		consorcio.consorcio c INNER JOIN #tempProveedor p ON c.nombre = p.nombre_consorcio
 END;
 GO
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- CARGAR expensa
-CREATE OR ALTER PROCEDURE spGenerarExpensas
+
+IF OBJECT_ID('consorcio.sp_generar_expensas') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_generar_expensas;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_generar_expensas
     @periodo_mes VARCHAR(12), -- Nombre del mes (ej. 'Abril')
     @anio INT                 -- A�o (ej. 2025)
 AS
@@ -437,7 +484,7 @@ BEGIN
     BEGIN TRY
         
         -- Insertar un registro de expensa para cada Consorcio activo.
-        INSERT INTO expensa (
+        INSERT INTO consorcio.expensa (
             id_consorcio,
             periodo
         )
@@ -445,10 +492,10 @@ BEGIN
             c.id_consorcio,
             @periodo_completo
         FROM
-            consorcio c -- Fuente de todos los Consorcios
+            consorcio.consorcio c -- Fuente de todos los Consorcios
         WHERE NOT EXISTS (
                 SELECT 1 
-                FROM expensa e
+                FROM consorcio.expensa e
                 WHERE e.id_consorcio = c.id_consorcio
                   AND e.periodo = @periodo_completo
             );
@@ -480,13 +527,20 @@ GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- CARGAR gasto
-CREATE OR ALTER PROCEDURE spGenerarGastos
+
+IF OBJECT_ID('consorcio.sp_generar_gastos') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_generar_gastos;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_generar_gastos
 AS
 BEGIN
     SET NOCOUNT ON;
 
     -- 1. Insertar un registro de Gasto por cada Expensa que a�n no tenga uno.
-    INSERT INTO gasto (
+    INSERT INTO consorcio.gasto (
         id_expensa, 
         periodo, 
         subtotal_ordinarios, 
@@ -498,12 +552,12 @@ BEGIN
         NULL,      -- Valor NULL seg�n el requerimiento
         NULL       -- Valor NULL seg�n el requerimiento
     FROM 
-        expensa e
+        consorcio.expensa e
     WHERE
         -- Cl�usula NOT EXISTS para asegurar la unicidad (no crear duplicados)
         NOT EXISTS (
             SELECT 1 
-            FROM Gasto g
+            FROM consorcio.gasto g
             WHERE g.id_expensa = e.id_expensa
         );
 
@@ -524,7 +578,14 @@ GO
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- CARGAR gastoOrdinario
-CREATE OR ALTER PROCEDURE sp_gastos_ordinarios
+
+IF OBJECT_ID('consorcio.sp_gastos_ordinarios') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_gastos_ordinarios;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_gastos_ordinarios
     @RutaArchivoJSON NVARCHAR(4000)
 AS
 BEGIN
@@ -588,7 +649,7 @@ BEGIN
             pvt.TipoGastoCorto,
             pvt.ImporteString
         FROM #gastoOrdinarioTemp t
-        INNER JOIN consorcio c ON UPPER(TRIM(c.nombre)) = UPPER(TRIM(t.nombreConsorcio))
+        INNER JOIN consorcio.consorcio c ON UPPER(TRIM(c.nombre)) = UPPER(TRIM(t.nombreConsorcio))
         INNER JOIN (
             -- UNPIVOT: Convierte las columnas de gasto en filas
             SELECT nombreConsorcio, mes_nombre, 'BANCARIOS' AS TipoGastoCorto, bancarios AS ImporteString FROM #gastoOrdinarioTemp
@@ -600,9 +661,9 @@ BEGIN
             UNION ALL SELECT nombreConsorcio, mes_nombre, 'LUZ', luz FROM #gastoOrdinarioTemp
         ) AS pvt ON pvt.nombreConsorcio = t.nombreConsorcio AND pvt.mes_nombre = t.mes_nombre
         INNER JOIN Meses m ON LOWER(m.nombre) = LOWER(TRIM(t.mes_nombre))
-        INNER JOIN expensa e ON e.id_consorcio = c.id_consorcio 
+        INNER JOIN consorcio.expensa e ON e.id_consorcio = c.id_consorcio 
                              AND e.periodo = CONCAT(CAST(YEAR(GETDATE()) AS NVARCHAR), '-', m.num)
-        INNER JOIN Gasto g ON g.id_expensa = e.id_expensa
+        INNER JOIN consorcio.gasto g ON g.id_expensa = e.id_expensa
     ),
     
     --  Mapear a Proveedor y Aplicar Lógica de Negocio
@@ -626,7 +687,7 @@ BEGIN
             
         FROM MapeoGastos m
         -- LEFT JOIN a Proveedor
-        LEFT JOIN proveedor p
+        LEFT JOIN consorcio.proveedor p
             ON p.id_consorcio = m.id_consorcio
             -- 1. Mapeo del Tipo Gasto a la categoría de la tabla 'proveedor'
             AND p.tipo_gasto = (
@@ -650,7 +711,7 @@ BEGIN
     )
 
     --  Inserción Final
-    INSERT INTO gastoOrdinario (id_gasto, tipo_gasto, subtipoGasto, nombre_empresa, importe)
+    INSERT INTO consorcio.gastoOrdinario (id_gasto, tipo_gasto, subtipoGasto, nombre_empresa, importe)
     SELECT
         fd.id_gasto,
         fd.tipo_gasto,
@@ -672,7 +733,14 @@ END
 GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 --CARGAR gastoExtraordinario
-CREATE OR ALTER PROCEDURE sp_importar_gastosExtraordinarios
+
+IF OBJECT_ID('consorcio.sp_importar_gastosExtraordinarios') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_importar_gastosExtraordinarios;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_importar_gastosExtraordinarios
     @RutaArchivo VARCHAR(255)  -- Par�metro de entrada para la ruta del archivo
 AS
 BEGIN
@@ -702,25 +770,32 @@ BEGIN
     -- Ejecutar la importaci�n (requiere permisos 'BULK ADMIN' o 'ADMINISTRATOR')
     EXEC sp_executesql @sql_dinamico;
 
-    INSERT INTO gastoExtraordinario (id_consorcio, tipo_gasto, descripcion,importe,fecha_gasto,forma_pago,cuota)
+    INSERT INTO consorcio.gastoExtraordinario (id_consorcio, tipo_gasto, descripcion,importe,fecha_gasto,forma_pago,cuota)
 	SELECT c.id_consorcio, tge.tipo, tge.descripcion, tge.importe, tge.fecha, tge.tipo_pago, tge.cuota
 	FROM #tempGastoExtraordinario tge 
-    inner join consorcio c on tge.nombre_consorcio = c.nombre
+    inner join consorcio.consorcio c on tge.nombre_consorcio = c.nombre
     
     --Asocia id_gasto a cada gasto 
     UPDATE ge 
     SET ge.id_gasto = g.id_gasto
-    FROM gastoExtraordinario ge
-    JOIN consorcio c ON ge.id_consorcio = c.id_consorcio
-    JOIN expensa e ON e.id_consorcio = c.id_consorcio
-    JOIN gasto g ON g.id_expensa = e.id_expensa
+    FROM consorcio.gastoExtraordinario ge
+    JOIN consorcio.consorcio c ON ge.id_consorcio = c.id_consorcio
+    JOIN consorcio.expensa e ON e.id_consorcio = c.id_consorcio
+    JOIN consorcio.gasto g ON g.id_expensa = e.id_expensa
     WHERE e.periodo = CONVERT(VARCHAR(7), ge.fecha_gasto, 120);
 
 END
 GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- CARGAR subtotales EN gasto
-CREATE OR ALTER PROCEDURE sp_calcularSubtotalesGastos
+
+IF OBJECT_ID('consorcio.sp_calcular_subtotalesGastos') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_calcular_subtotalesGastos;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_calcular_subtotalesGastos
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -731,7 +806,7 @@ BEGIN
             ge.id_gasto,
             SUM(ge.importe) AS TotalOrdinario
         FROM
-            gastoOrdinario ge
+            consorcio.gastoOrdinario ge
         GROUP BY
             ge.id_gasto
     ), -- 
@@ -741,7 +816,7 @@ BEGIN
             ge.id_gasto,
             SUM(ge.importe) AS TotalExtraordinario
         FROM
-            gastoExtraordinario ge
+            consorcio.gastoExtraordinario ge
         GROUP BY
             ge.id_gasto
     ) 
@@ -752,7 +827,7 @@ BEGIN
         g.subtotal_ordinarios = ISNULL(so.TotalOrdinario, 0),
         g.subtotal_extraordinarios = ISNULL(se.TotalExtraordinario, 0)
     FROM
-        gasto g
+        consorcio.gasto g
     LEFT JOIN
         SubtotalesOrdinarios so ON g.id_gasto = so.id_gasto
     LEFT JOIN
@@ -772,7 +847,14 @@ END
 GO
 --------------------------------------------------------------------------------------------------------------------------------------------
 ---------------- ESTADO CUENTA PRORRATEO -----------------------
-CREATE OR ALTER PROCEDURE sp_generar_estadoCuentaProrrateo
+
+IF OBJECT_ID('consorcio.sp_generar_estadoCuentaProrrateo') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_generar_estadoCuentaProrrateo;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_generar_estadoCuentaProrrateo
     @periodo_mes VARCHAR(12),
     @anio INT
 AS
@@ -815,9 +897,9 @@ BEGIN
         SELECT
             e.id_expensa, uf.id_uf, g.subtotal_ordinarios, g.subtotal_extraordinarios, uf.coeficiente,
             e.id_consorcio
-        FROM expensa e
-        INNER JOIN gasto g ON e.id_expensa = g.id_expensa
-        INNER JOIN unidadFuncional uf ON e.id_consorcio = uf.id_consorcio
+        FROM consorcio.expensa e
+        INNER JOIN consorcio.gasto g ON e.id_expensa = g.id_expensa
+        INNER JOIN consorcio.unidadFuncional uf ON e.id_consorcio = uf.id_consorcio
         WHERE e.periodo = @periodo_completo -- FILTRA por 'AAAA-MM'
     ),
     SaldoAnterior AS (
@@ -826,7 +908,7 @@ BEGIN
             -- Busca la DEUDA FINAL del período ANTERIOR para esta UF
             ISNULL((
                 SELECT TOP 1 ecp.deuda 
-                FROM estadoCuentaProrrateo ecp
+                FROM consorcio.estadoCuentaProrrateo ecp
                 INNER JOIN expensa e_prev ON e_prev.id_expensa = ecp.id_expensa
                 WHERE ecp.id_uf = de.id_uf
                 AND e_prev.periodo = @periodo_anterior -- FILTRA por PERIODO ANTERIOR
@@ -844,7 +926,7 @@ BEGIN
         INNER JOIN SaldoAnterior sa ON de.id_uf = sa.id_uf
     )
     -- Insertar el Prorrateo en la tabla de destino
-    INSERT INTO estadoCuentaProrrateo (
+    INSERT INTO consorcio.estadoCuentaProrrateo (
         id_expensa, id_uf, fecha_emision, fecha_1er_venc, fecha_2do_venc,
         saldo_anterior, pagos_recibidos, deuda, interes_por_mora, expensas_ordinarias,
         expensas_extraordinarias, total_pagar 
@@ -858,7 +940,7 @@ BEGIN
         pc.saldo_anterior + pc.expensas_ordinarias + pc.expensas_extraordinarias AS total_pagar_inicial
     FROM ProrrateoCalculado pc
     WHERE NOT EXISTS (
-        SELECT 1 FROM estadoCuentaProrrateo ecp WHERE ecp.id_expensa = pc.id_expensa AND ecp.id_uf = pc.id_uf
+        SELECT 1 FROM consorcio.estadoCuentaProrrateo ecp WHERE ecp.id_expensa = pc.id_expensa AND ecp.id_uf = pc.id_uf
     ); 
 
     PRINT 'Generación de Estado de Cuenta y Prorrateo completada para el período: ' + @periodo_completo;
@@ -866,10 +948,15 @@ BEGIN
 END
 GO
 
-select * from estadoCuentaProrrateo
-
 --------------------------------Asociar los pagos------------------------------------------
-CREATE OR ALTER PROCEDURE sp_AsociarPagosAEstadoCuenta
+
+IF OBJECT_ID('consorcio.sp_AsociarPagosAEstadoCuenta') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_AsociarPagosAEstadoCuenta;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_AsociarPagosAEstadoCuenta
 AS
 BEGIN
     -- Evita que se devuelvan mensajes de conteo de filas (SET NOCOUNT ON)
@@ -886,11 +973,11 @@ BEGIN
         P.asociado = 'SI',
         P.id_detalleDeCuenta = ECP.id_detalleDeCuenta
     FROM 
-        pago P
+        consorcio.pago P
     INNER JOIN 
-        unidadFuncional UF ON P.cuenta_origen = UF.cuenta_origen
+        consorcio.unidadFuncional UF ON P.cuenta_origen = UF.cuenta_origen
     INNER JOIN 
-        estadoCuentaProrrateo ECP ON UF.id_uf = ECP.id_uf
+        consorcio.estadoCuentaProrrateo ECP ON UF.id_uf = ECP.id_uf
     WHERE 
         P.asociado = 'NO' -- Solo pagos no asociados
         AND P.id_detalleDeCuenta IS NULL -- Aseguramos que no tenga asociación previa
@@ -908,9 +995,9 @@ BEGIN
     SET 
         ECP.pagos_recibidos = ISNULL(ECP.pagos_recibidos, 0) + P.importe
     FROM 
-        estadoCuentaProrrateo ECP
+        consorcio.estadoCuentaProrrateo ECP
     INNER JOIN 
-        pago P ON ECP.id_detalleDeCuenta = P.id_detalleDeCuenta
+        consorcio.pago P ON ECP.id_detalleDeCuenta = P.id_detalleDeCuenta
     WHERE
         P.id_detalleDeCuenta IS NOT NULL; -- Solo registros que tienen una asociación.
 
@@ -920,8 +1007,13 @@ BEGIN
 END
 GO
 -------------------------Recalcular tabla estadoCuentaProrrateo------------------
+IF OBJECT_ID('consorcio.fn_CalcularInteresMora') IS NOT NULL
+BEGIN
+    DROP FUNCTION consorcio.fn_CalcularInteresMora;
+END
+GO
 
-CREATE OR ALTER FUNCTION fn_CalcularInteresMora_Nuevo (
+CREATE FUNCTION consorcio.fn_CalcularInteresMora (
     @p_saldo_pendiente DECIMAL(10,2),
     @p_fecha_1er_venc DATE,
     @p_fecha_2do_venc DATE,
@@ -953,7 +1045,13 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE sp_RecalcularSaldosYMoras
+IF OBJECT_ID('consorcio.sp_RecalcularSaldosYMoras') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_RecalcularSaldosYMoras;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_RecalcularSaldosYMoras
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -987,18 +1085,28 @@ BEGIN
                     0.00 -- Si se pagó por completo o de más, la mora es cero
             END
     FROM
-        estadoCuentaProrrateo ECP; -- Aplica a TODAS las filas
+        consorcio.estadoCuentaProrrateo ECP; 
 
-    -- 2. Actualizar TOTAL A PAGAR (Total Pagar Final) para *TODAS* las expensas
+    -- Actualizar TOTAL A PAGAR (Total Pagar Final) para *TODAS* las expensas
     
     UPDATE ECP
     SET
         -- Total a pagar = Deuda Pendiente + Interés por Mora 
         ECP.total_pagar = ECP.deuda + ECP.interes_por_mora
     FROM
-        estadoCuentaProrrateo ECP; -- Aplica a TODAS las filas
+        consorcio.estadoCuentaProrrateo ECP; 
 
     PRINT 'Recálculo de saldos y moras completado para TODAS las expensas cargadas.';
+
+    --  Asegurar que TOTAL_PAGAR nunca sea negativo (debe ser 0)
+    
+    UPDATE ECP
+    SET
+        ECP.total_pagar = 0.00 -- Establecer a cero
+    FROM
+        consorcio.estadoCuentaProrrateo ECP
+    WHERE
+        ECP.total_pagar < 0.00;
 
 END
 GO
@@ -1007,7 +1115,13 @@ GO
 
 
 ------------------- ESTADO FINANCIERO -----------------------------
-CREATE OR ALTER PROCEDURE generarEstadoFinanciero
+IF OBJECT_ID('consorcio.sp_generar_estado_financiero') IS NOT NULL
+BEGIN
+    DROP PROCEDURE consorcio.sp_generar_estado_financiero;
+END
+GO
+
+CREATE PROCEDURE consorcio.sp_generar_estado_financiero
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1020,7 +1134,7 @@ BEGIN
     SELECT DISTINCT 
         CONVERT(date, periodo + '-01') AS periodo_fecha
     INTO #periodos
-    FROM expensa;
+    FROM consorcio.expensa;
 
     -------------------------------------------------------------------
     -- Ordenar períodos
@@ -1039,7 +1153,7 @@ BEGIN
         -------------------------------------------------------------------
         -- Insertar estado financiero para todos los consorcios en este período
         -------------------------------------------------------------------
-        INSERT INTO estadoFinanciero (
+        INSERT INTO consorcio.estadoFinanciero (
             id_consorcio,
             saldo_anterior,
             ingreso_expensas_termino,
@@ -1057,7 +1171,7 @@ BEGIN
             --------------------------------------------------------------
             ISNULL((
                 SELECT TOP 1 ef.saldo_cierre
-                FROM estadoFinanciero ef
+                FROM consorcio.estadoFinanciero ef
                 WHERE ef.id_consorcio = c.id_consorcio
                   AND ef.periodo < @periodo_actual
                 ORDER BY ef.periodo DESC
@@ -1068,9 +1182,9 @@ BEGIN
             --------------------------------------------------------------
             ISNULL((
                 SELECT SUM(pg.importe)
-                FROM pago pg
-                JOIN estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
-                JOIN expensa ex ON ec.id_expensa = ex.id_expensa
+                FROM consorcio.pago pg
+                JOIN consorcio.estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                JOIN consorcio.expensa ex ON ec.id_expensa = ex.id_expensa
                 WHERE ex.id_consorcio = c.id_consorcio
                   AND CONVERT(date, ex.periodo + '-01') = @periodo_actual
                   AND pg.fecha <= ec.fecha_2do_venc
@@ -1082,9 +1196,9 @@ BEGIN
             --------------------------------------------------------------
             ISNULL((
                 SELECT SUM(pg.importe)
-                FROM pago pg
-                JOIN estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
-                JOIN expensa ex ON ec.id_expensa = ex.id_expensa
+                FROM consorcio.pago pg
+                JOIN consorcio.estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                JOIN consorcio.expensa ex ON ec.id_expensa = ex.id_expensa
                 WHERE ex.id_consorcio = c.id_consorcio
                   AND CONVERT(date, ex.periodo + '-01') = @periodo_actual
                   AND pg.fecha > ec.fecha_2do_venc
@@ -1095,9 +1209,9 @@ BEGIN
             --------------------------------------------------------------
             ISNULL((
                 SELECT SUM(pg.importe)
-                FROM pago pg
-                JOIN estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
-                JOIN expensa ex ON ec.id_expensa = ex.id_expensa
+                FROM consorcio.pago pg
+                JOIN consorcio.estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                JOIN consorcio.expensa ex ON ec.id_expensa = ex.id_expensa
                 WHERE ex.id_consorcio = c.id_consorcio
                   AND CONVERT(date, ex.periodo + '-01') = @periodo_actual
                   AND pg.fecha < ec.fecha_emision
@@ -1109,10 +1223,10 @@ BEGIN
             (
                 ISNULL((
                     SELECT SUM(gor.importe)
-                    FROM gasto g
-                    JOIN gastoOrdinario gor ON g.id_gasto = gor.id_gasto
+                    FROM consorcio.gasto g
+                    JOIN consorcio.gastoOrdinario gor ON g.id_gasto = gor.id_gasto
                     WHERE g.id_expensa IN (
-                        SELECT id_expensa FROM expensa
+                        SELECT id_expensa FROM consorcio.expensa
                         WHERE id_consorcio = c.id_consorcio
                           AND CONVERT(date, periodo + '-01') = @periodo_actual
                     )
@@ -1120,10 +1234,10 @@ BEGIN
                 +
                 ISNULL((
                     SELECT SUM(ger.importe)
-                    FROM gasto g
-                    JOIN gastoExtraordinario ger ON g.id_gasto = ger.id_gasto
+                    FROM consorcio.gasto g
+                    JOIN consorcio.gastoExtraordinario ger ON g.id_gasto = ger.id_gasto
                     WHERE g.id_expensa IN (
-                        SELECT id_expensa FROM expensa
+                        SELECT id_expensa FROM consorcio.expensa
                         WHERE id_consorcio = c.id_consorcio
                           AND CONVERT(date, periodo + '-01') = @periodo_actual
                     )
@@ -1137,7 +1251,7 @@ BEGIN
                 -- saldo anterior
                 ISNULL((
                     SELECT TOP 1 saldo_cierre
-                    FROM estadoFinanciero
+                    FROM consorcio.estadoFinanciero
                     WHERE id_consorcio = c.id_consorcio
                       AND periodo < @periodo_actual
                     ORDER BY periodo DESC
@@ -1146,9 +1260,9 @@ BEGIN
                 -- ingresos totales
                 ISNULL((
                     SELECT SUM(pg.importe)
-                    FROM pago pg
-                    JOIN estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
-                    JOIN expensa ex ON ec.id_expensa = ex.id_expensa
+                    FROM consorcio.pago pg
+                    JOIN consorcio.estadoCuentaProrrateo ec ON pg.id_detalleDeCuenta = ec.id_detalleDeCuenta
+                    JOIN consorcio.expensa ex ON ec.id_expensa = ex.id_expensa
                     WHERE ex.id_consorcio = c.id_consorcio
                       AND CONVERT(date, ex.periodo + '-01') = @periodo_actual
                 ), 0)
@@ -1157,10 +1271,10 @@ BEGIN
                 (
                     ISNULL((
                         SELECT SUM(gor.importe)
-                        FROM gasto g
-                        JOIN gastoOrdinario gor ON g.id_gasto = gor.id_gasto
+                        FROM consorcio.gasto g
+                        JOIN consorcio.gastoOrdinario gor ON g.id_gasto = gor.id_gasto
                         WHERE g.id_expensa IN (
-                            SELECT id_expensa FROM expensa
+                            SELECT id_expensa FROM consorcio.expensa
                             WHERE id_consorcio = c.id_consorcio
                               AND CONVERT(date, periodo + '-01') = @periodo_actual
                         )
@@ -1168,10 +1282,10 @@ BEGIN
                     +
                     ISNULL((
                         SELECT SUM(ger.importe)
-                        FROM gasto g
-                        JOIN gastoExtraordinario ger ON g.id_gasto = ger.id_gasto
+                        FROM consorcio.gasto g
+                        JOIN consorcio.gastoExtraordinario ger ON g.id_gasto = ger.id_gasto
                         WHERE g.id_expensa IN (
-                            SELECT id_expensa FROM expensa
+                            SELECT id_expensa FROM consorcio.expensa
                             WHERE id_consorcio = c.id_consorcio
                               AND CONVERT(date, periodo + '-01') = @periodo_actual
                         )
@@ -1181,7 +1295,7 @@ BEGIN
 
             @periodo_actual
 
-        FROM consorcio c;
+        FROM consorcio.consorcio c;
 
         -------------------------------------------------------------------
         -- Remover el período ya procesado
