@@ -108,7 +108,21 @@ BEGIN
     -- Nota: Aqu� se asume que la tabla 'consorcio' no admite duplicados (lo que debes validar)
     INSERT INTO consorcio.consorcio (nombre, direccion, cant_uf, cant_m2)
 	SELECT UPPER(LTRIM(RTRIM(nombre))), UPPER(LTRIM(RTRIM(direccion))), cant_uf, cant_m2
-	FROM #tempConsorcio 
+	FROM #tempConsorcio t
+    WHERE
+    -- Evita registros donde el nombre o la dirección son vacíos 
+    ISNULL(t.nombre, '') <> '' 
+    AND ISNULL(t.direccion, '') <> ''
+    
+    -- Evita duplicados: NO EXISTE un registro en la tabla consorcio
+    -- con el mismo nombre Y la misma dirección (ambos estandarizados).
+    AND NOT EXISTS (
+        SELECT 1 
+        FROM consorcio.consorcio p
+        WHERE 
+            UPPER(TRIM(p.nombre)) = UPPER(TRIM(t.nombre)) 
+            AND UPPER(TRIM(p.direccion)) = UPPER(TRIM(t.direccion))
+    )
 
 END;
 GO
@@ -158,11 +172,30 @@ BEGIN
     -- Insertar en la tabla final unidadfuncional con transformaciones
     -- Nota: Aqu� se asume que la tabla 'unidadfuncional' no admite duplicados 
     INSERT INTO consorcio.unidadFuncional (id_consorcio, numero_uf, piso, depto, cochera, cochera_m2, baulera, baulera_m2, cant_m2, coeficiente)
-	SELECT    UPPER(c.id_consorcio), CAST(u.numero_uf AS INT), CAST(u.piso AS varchar(3)), CAST(u.depto as varchar(5)), 
+	SELECT    c.id_consorcio, CAST(u.numero_uf AS INT), CAST(u.piso AS varchar(3)), CAST(u.depto as varchar(5)), 
         CASE WHEN u.cochera = 'SI' THEN 1 ELSE 0 END, CAST(u.cochera_m2 AS INT), CASE WHEN u.baulera = 'SI' THEN 1 ELSE 0 END, 
         CAST(u.baulera_m2 as INT), CAST(u.uf_m2 AS INT), CAST(REPLACE(u.coeficiente, ',', '.') AS decimal (2,1))
 	FROM #tempUf u
-	JOIN consorcio.consorcio c ON c.nombre = u.nombre_consorcio;
+	JOIN consorcio.consorcio c ON UPPER(TRIM(c.nombre)) = UPPER(TRIM(u.nombre_consorcio))
+    WHERE
+    -- Evita registros donde el número de UF, piso o depto sean NULL o vacíos
+    ISNULL(u.numero_uf, 0) <> 0 
+    AND ISNULL(u.piso, '') <> ''
+    AND ISNULL(u.depto, '') <> ''
+    
+    -- Evita duplicados: NO EXISTE un registro en la tabla unidadFuncional
+    -- con la misma combinación de (id_consorcio, numero_uf, piso, y depto).
+    AND NOT EXISTS (
+        SELECT 1 
+        FROM consorcio.unidadFuncional p
+        WHERE 
+            -- id_consorcio (FK)
+            p.id_consorcio = c.id_consorcio 
+            -- La combinación clave (numero_uf, piso, depto)
+            AND p.numero_uf = u.numero_uf 
+            AND UPPER(TRIM(p.piso)) = UPPER(TRIM(u.piso))
+            AND UPPER(TRIM(p.depto)) = UPPER(TRIM(u.depto))
+    );
 END;
 GO
 

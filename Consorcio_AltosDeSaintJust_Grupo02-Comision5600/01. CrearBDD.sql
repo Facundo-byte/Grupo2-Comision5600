@@ -15,7 +15,6 @@ BEGIN
     -- asegurar que nadie esté usando la DB antes de eliminarla
     ALTER DATABASE Com5600G02 SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     
-    -- Eliminar la base de datos
     DROP DATABASE Com5600G02;
     
     PRINT 'Base de datosCom5600G02 eliminada con éxito.';

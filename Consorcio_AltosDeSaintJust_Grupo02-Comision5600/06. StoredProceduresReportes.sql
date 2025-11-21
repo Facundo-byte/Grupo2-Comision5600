@@ -183,7 +183,7 @@ BEGIN
         WHERE
             uf.id_consorcio = @idConsorcio -- Filtro por consorcio
             AND YEAR(p.fecha) = @Anio      -- Filtro por año de pago
-            -- Filtro por Piso (la columna uf.piso)
+            -- Filtro por Piso 
             AND (@Piso IS NULL OR uf.piso = @Piso)
         GROUP BY MONTH(p.fecha)
     )
@@ -203,7 +203,7 @@ BEGIN
                     FOR XML PATH('Monto'), TYPE
                 )
             FROM (
-                -- Nota: El UNION ALL debe incluir todos los departamentos que se pivotearon.
+                -- El UNION ALL debe incluir todos los departamentos que se pivotearon.
                 SELECT 'A' AS nombre, A AS Monto_ARS FROM PagosPivot WHERE PagosPivot.MesNumero = P.MesNumero
                 UNION ALL SELECT 'B', B FROM PagosPivot WHERE PagosPivot.MesNumero = P.MesNumero
                 UNION ALL SELECT 'C', C FROM PagosPivot WHERE PagosPivot.MesNumero = P.MesNumero
@@ -396,14 +396,14 @@ BEGIN
     JOIN
         consorcio.estadoCuentaProrrateo ec ON uf.id_uf = ec.id_uf
     WHERE
-        -- Filtro: Solo propietarios (según tu tabla personaUf)
+        -- Filtro: Solo propietarios 
         puf.tipo_responsable = 'propietario' 
         -- Filtro: Solo deudas mayores a cero
         AND ec.deuda > 0
         -- Filtro opcional por Consorcio
         AND (@idConsorcio IS NULL OR uf.id_consorcio = @idConsorcio)
     GROUP BY
-        p.id_persona, -- Agrupar por ID para asegurar unicidad
+        p.id_persona, 
         p.nombre,
         p.apellido,
         p.dni,
@@ -416,7 +416,7 @@ GO
 
 
 -- REPORTE 6
--- echas de pagos de expensas ordinarias de cada UF y la cantidad de días que 
+-- fechas de pagos de expensas ordinarias de cada UF y la cantidad de días que 
 --pasan entre un pago y el siguiente
 
 CREATE OR ALTER PROCEDURE rep.SP_Reporte_6_PeriodicidadPagosUF
