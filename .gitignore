@@ -1,0 +1,12 @@
+# Archivos de caché e indices de Visual Studio / SSMS
+.vs/
+*.vsidx
+*.suo
+*.user
+
+# Ignorar carpetas de compilación (si tu proyecto SQL las usa)
+[Bb]in/
+[Oo]bj/
+
+# Archivos que el profe probablemente no necesite
+*.bak

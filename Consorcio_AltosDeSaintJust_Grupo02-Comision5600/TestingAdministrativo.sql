@@ -16,6 +16,9 @@ ACCIONES: Actualizacion de datos UF, generación de reportes
 -- * miguel
 -- * edinson
 
+use Com5600G02
+go
+
 PRINT '--- PRUEBAS: Administrativo general (user_exequiel) ---';
 EXECUTE AS LOGIN = 'login_exequiel';
 GO

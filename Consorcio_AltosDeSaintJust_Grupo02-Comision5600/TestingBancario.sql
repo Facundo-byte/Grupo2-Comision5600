@@ -18,6 +18,7 @@ ACCIONES: Importación de información bancaria, generación de reportes
 
 USE Com5600G02
 GO
+
 PRINT '--- PRUEBAS: Administrativo Bancario (user_leandro) ---';
 EXECUTE AS LOGIN = 'login_leandro';
 GO
@@ -26,10 +27,9 @@ GO
 -- Resultado Esperado: 1 fila afectada
 BEGIN TRANSACTION
 INSERT INTO consorcio.pago 
-    (id_pago, fecha, cuenta_origen, importe, asociado, id_detalleDeCuenta)
+    ( fecha, cuenta_origen, importe, asociado, id_detalleDeCuenta)
 VALUES 
     (
-        999991,
         GETDATE(),
         '1234567890123456789012',
         15500.50,   

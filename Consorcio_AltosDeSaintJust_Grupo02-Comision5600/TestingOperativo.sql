@@ -16,6 +16,8 @@ ACCIONES: Actualización de datos UF, generación de reportes
 -- * lautaro 
 -- * ayrton
 -- * marco
+use Com5600G02
+go
 
 
 PRINT '--- PRUEBAS: Administrativo operativo (user_lautaro) ---';
@@ -43,5 +45,5 @@ GO
 
 -- PRUEBA DE FALLO: Intentar INSERT en la tabla 'pago' (Tarea de Admin Bancario)
 -- Resultado Esperado: ERROR (Msg 229: The INSERT permission was denied...)
-INSERT INTO consorcio.pago (id_pago, fecha, cuenta_origen, importe, asociado)
-VALUES (999002, GETDATE(), '3333333333333333333333', 500.00, 0);
+INSERT INTO consorcio.pago ( fecha, cuenta_origen, importe, asociado)
+VALUES ( GETDATE(), '3333333333333333333333', 500.00, 0);

@@ -12,6 +12,9 @@ Enunciado:        "Creación procedimientos almacenados para el cifrado de datos 
 --------------------------------SP ENCRIPTACIÓN--------------------------------------
 -- PROCEDIMIENTO: Modificacion de tablas para cifrado de datos sensibles
 --------------------------------------------------------------------------------
+use Com5600G02
+go 
+
 CREATE OR ALTER PROCEDURE consorcio.sp_migrar_a_cifrado
     @FraseClave NVARCHAR(128)
 AS

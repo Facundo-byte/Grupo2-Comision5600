@@ -1,62 +1,65 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\",
+  "WorkspaceRootPath": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingSistemas.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:TestingSistemas.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingOperativo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:TestingOperativo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingBancario.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:TestingBancario.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingAdministrativo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:TestingAdministrativo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\09. CrearSPCifrado.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:09. CrearSPCifrado.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\08. CrearUsersYPermisos.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:08. CrearUsersYPermisos.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\07. ExecuteSpReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:07. ExecuteSpReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\06. StoredProceduresReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:06. StoredProceduresReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\05. IndicesReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:05. IndicesReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\04. EjecutarImportaciones.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:04. EjecutarImportaciones.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\03. Crear_SP_Importaciones.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:03. Crear_SP_Importaciones.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\02. CrearObjetos.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:02. CrearObjetos.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\01. CrearBDD.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\01. CrearBDD.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
       "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:01. CrearBDD.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\StoredProceduresReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:StoredProceduresReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\02. CrearObjetos.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:02. CrearObjetos.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\08. CrearUsersYPermisos.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:08. CrearUsersYPermisos.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingSistemas.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:TestingSistemas.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingOperativo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:TestingOperativo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingBancario.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:TestingBancario.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingAdministrativo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:TestingAdministrativo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\04. EjecutarImportaciones.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:04. EjecutarImportaciones.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\07. ExecuteSpReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:07. ExecuteSpReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\Pol\u00EDticaDeRespaldo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:Pol\u00EDticaDeRespaldo.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\09. CrearSPCifrado.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:09. CrearSPCifrado.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\03. Crear_SP_Importaciones.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:03. Crear_SP_Importaciones.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\06. StoredProceduresReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:06. StoredProceduresReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\05. IndicesReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}",
+      "RelativeMoniker": "D:0:0:{527546CE-1783-3324-455D-CD66E5E453B3}|Consorcio_AltosDeSaintJust_Grupo02-Comision5600.ssmssqlproj|solutionrelative:05. IndicesReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\StoredProceduresReportes.sql||{B5A506EB-11BE-4782-9A18-21265C2CA0B4}"
     }
   ],
   "DocumentGroupContainers": [
@@ -66,162 +69,173 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "09. CrearSPCifrado.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (90))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\09. CrearSPCifrado.sql",
-              "RelativeDocumentMoniker": "09. CrearSPCifrado.sql",
-              "ToolTip": "09. CrearSPCifrado.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (90))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:43:46.993Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (90))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "TestingAdministrativo.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (91))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingAdministrativo.sql",
-              "RelativeDocumentMoniker": "TestingAdministrativo.sql",
-              "ToolTip": "TestingAdministrativo.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (91))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:43:48.424Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (91))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "TestingBancario.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (92))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingBancario.sql",
-              "RelativeDocumentMoniker": "TestingBancario.sql",
-              "ToolTip": "TestingBancario.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (92))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:43:55.084Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (92))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "TestingOperativo.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (89))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingOperativo.sql",
-              "RelativeDocumentMoniker": "TestingOperativo.sql",
-              "ToolTip": "TestingOperativo.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (89))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:44:00.212Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (89))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "TestingSistemas.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (93))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingSistemas.sql",
-              "RelativeDocumentMoniker": "TestingSistemas.sql",
-              "ToolTip": "TestingSistemas.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (93))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:44:05.637Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (93))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "08. CrearUsersYPermisos.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (88))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\08. CrearUsersYPermisos.sql",
-              "RelativeDocumentMoniker": "08. CrearUsersYPermisos.sql",
-              "ToolTip": "08. CrearUsersYPermisos.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (88))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:43:44.868Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (88))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "07. ExecuteSpReportes.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (54))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\07. ExecuteSpReportes.sql",
-              "RelativeDocumentMoniker": "07. ExecuteSpReportes.sql",
-              "ToolTip": "07. ExecuteSpReportes.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (54))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:43:39.856Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (54))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "06. StoredProceduresReportes.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (53))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\06. StoredProceduresReportes.sql",
-              "RelativeDocumentMoniker": "06. StoredProceduresReportes.sql",
-              "ToolTip": "06. StoredProceduresReportes.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (53))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:43:38.055Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (53))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "05. IndicesReportes.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (103))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\05. IndicesReportes.sql",
-              "RelativeDocumentMoniker": "05. IndicesReportes.sql",
-              "ToolTip": "05. IndicesReportes.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (103))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-18T06:42:52.044Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (103))"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 9,
-              "Title": "04. EjecutarImportaciones.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (52))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\04. EjecutarImportaciones.sql",
-              "RelativeDocumentMoniker": "04. EjecutarImportaciones.sql",
-              "ToolTip": "04. EjecutarImportaciones.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (52))",
+              "Title": "Pol\u00EDticaDeRespaldo.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (69))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\Pol\u00EDticaDeRespaldo.sql",
+              "RelativeDocumentMoniker": "Pol\u00EDticaDeRespaldo.sql",
+              "ToolTip": "Pol\u00EDticaDeRespaldo.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (69))",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-16T23:15:52.845Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (52))"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "03. Crear_SP_Importaciones.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (101))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\03. Crear_SP_Importaciones.sql",
-              "RelativeDocumentMoniker": "03. Crear_SP_Importaciones.sql",
-              "ToolTip": "03. Crear_SP_Importaciones.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (101))",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-16T23:11:42.918Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (101))"
+              "WhenOpened": "2025-11-21T00:12:36.185Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (69))"
             },
             {
               "$type": "Document",
               "DocumentIndex": 11,
-              "Title": "02. CrearObjetos.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (96))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\02. CrearObjetos.sql",
-              "RelativeDocumentMoniker": "02. CrearObjetos.sql",
-              "ToolTip": "02. CrearObjetos.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (96))",
+              "Title": "03. Crear_SP_Importaciones.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (53))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\03. Crear_SP_Importaciones.sql",
+              "RelativeDocumentMoniker": "03. Crear_SP_Importaciones.sql",
+              "ToolTip": "03. Crear_SP_Importaciones.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (53))",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2025-11-17T01:39:47.68Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (96))"
+              "WhenOpened": "2025-11-16T23:11:42.918Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (53))"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "01. CrearBDD.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (102))",
-              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\01. CrearBDD.sql",
+              "DocumentIndex": 1,
+              "Title": "02. CrearObjetos.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (52))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\02. CrearObjetos.sql",
+              "RelativeDocumentMoniker": "02. CrearObjetos.sql",
+              "ToolTip": "02. CrearObjetos.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (52))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-17T01:39:47.68Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (52))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "TestingSistemas.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (92))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingSistemas.sql",
+              "RelativeDocumentMoniker": "TestingSistemas.sql",
+              "ToolTip": "TestingSistemas.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (92))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:44:05.637Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (92))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "08. CrearUsersYPermisos.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (56))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\08. CrearUsersYPermisos.sql",
+              "RelativeDocumentMoniker": "08. CrearUsersYPermisos.sql",
+              "ToolTip": "08. CrearUsersYPermisos.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (56))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:43:44.868Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (56))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "01. CrearBDD.sql - localhost\\SQLEXPRESS.ej13_Metricas (JUANNOTEBOOK\\juanb (67))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\01. CrearBDD.sql",
               "RelativeDocumentMoniker": "01. CrearBDD.sql",
-              "ToolTip": "01. CrearBDD.sql - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (102))",
+              "ToolTip": "01. CrearBDD.sql - localhost\\SQLEXPRESS.ej13_Metricas (JUANNOTEBOOK\\juanb (67))",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
               "WhenOpened": "2025-11-17T01:39:44.96Z",
-              "EditorCaption": " - localhost\\SQLEXPRESS.master (JUANNOTEBOOK\\juanb (102))"
+              "EditorCaption": " - localhost\\SQLEXPRESS.ej13_Metricas (JUANNOTEBOOK\\juanb (67))"
             },
             {
               "$type": "Document",
               "DocumentIndex": 13,
+              "Title": "05. IndicesReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (54))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\05. IndicesReportes.sql",
+              "RelativeDocumentMoniker": "05. IndicesReportes.sql",
+              "ToolTip": "05. IndicesReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (54))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:42:52.044Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (54))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
               "Title": "StoredProceduresReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (84))",
               "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\StoredProceduresReportes.sql",
-              "RelativeDocumentMoniker": "StoredProceduresReportes.sql",
+              "RelativeDocumentMoniker": "..\\..\\..\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\StoredProceduresReportes.sql",
               "ToolTip": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\StoredProceduresReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (84))",
-              "RelativeToolTip": "StoredProceduresReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (84))",
+              "RelativeToolTip": "..\\..\\..\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\StoredProceduresReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (84))",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
               "WhenOpened": "2025-11-16T23:16:21.423Z",
               "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (84))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "04. EjecutarImportaciones.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (71))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\04. EjecutarImportaciones.sql",
+              "RelativeDocumentMoniker": "04. EjecutarImportaciones.sql",
+              "ToolTip": "04. EjecutarImportaciones.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (71))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-16T23:15:52.845Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (71))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "TestingOperativo.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (91))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingOperativo.sql",
+              "RelativeDocumentMoniker": "TestingOperativo.sql",
+              "ToolTip": "TestingOperativo.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (91))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:44:00.212Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (91))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "TestingBancario.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (58))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingBancario.sql",
+              "RelativeDocumentMoniker": "TestingBancario.sql",
+              "ToolTip": "TestingBancario.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (58))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:43:55.084Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (58))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "TestingAdministrativo.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (79))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\TestingAdministrativo.sql",
+              "RelativeDocumentMoniker": "TestingAdministrativo.sql",
+              "ToolTip": "TestingAdministrativo.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (79))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:43:48.424Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (79))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "09. CrearSPCifrado.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (62))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\09. CrearSPCifrado.sql",
+              "RelativeDocumentMoniker": "09. CrearSPCifrado.sql",
+              "ToolTip": "09. CrearSPCifrado.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (62))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:43:46.993Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (62))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "07. ExecuteSpReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (74))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\07. ExecuteSpReportes.sql",
+              "RelativeDocumentMoniker": "07. ExecuteSpReportes.sql",
+              "ToolTip": "07. ExecuteSpReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (74))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:43:39.856Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (74))"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "06. StoredProceduresReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (73))",
+              "DocumentMoniker": "C:\\Unlam 2.0\\Segundo a\u00F1o\\Bdd aplicada\\Trabajo pr\u00E1ctico\\SQL\\TP_Final_Grupo02_Com5600\\Grupo2-Comision5600\\Consorcio_AltosDeSaintJust_Grupo02-Comision5600\\06. StoredProceduresReportes.sql",
+              "RelativeDocumentMoniker": "06. StoredProceduresReportes.sql",
+              "ToolTip": "06. StoredProceduresReportes.sql - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (73))",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2025-11-18T06:43:38.055Z",
+              "EditorCaption": " - localhost\\SQLEXPRESS.Com5600G02 (JUANNOTEBOOK\\juanb (73))"
             }
           ]
         }

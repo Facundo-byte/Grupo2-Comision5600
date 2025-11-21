@@ -15,7 +15,7 @@ go
 
 
 --------------------------------------CARGAR persona
-DECLARE @archivo_personas VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\consorcios\Inquilino-propietarios-datos.csv'; --<--Inquilino-propietarios-datos.csv
+DECLARE @archivo_personas VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\Inquilino-propietarios-datos.csv'; --<--Inquilino-propietarios-datos.csv
 --DELETE FROM consorcio.persona; 
 --DBCC CHECKIDENT ('consorcio.persona', RESEED, 0);
 EXEC consorcio.sp_importar_personas @RutaArchivoPersonas = @archivo_personas;
@@ -23,7 +23,7 @@ GO
 --select * from consorcio.persona;
 
 --------------------------------------CARGAR consorcio
-DECLARE @archivo_consorcios VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\Grupo2-Comision5600\datos varios(Consorcios).csv'; --<-- datos varios 1(Consorcios).csv
+DECLARE @archivo_consorcios VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\datos varios(Consorcios).csv'; --<-- datos varios 1(Consorcios).csv
 --DELETE FROM consorcio.consorcio; 
 --DBCC CHECKIDENT ('consorcio.consorcio', RESEED, 0);
 EXEC consorcio.sp_importar_consorcios @RutaArchivo = @archivo_consorcios;
@@ -31,7 +31,7 @@ GO
 --select * from consorcio.consorcio
 
 ------------------------------------CARGAR unidadFuncional
-DECLARE @archivo_uf VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\Grupo2-Comision5600\UF por consorcio.txt'; --<-- UF por consorcio.txt
+DECLARE @archivo_uf VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\UF por consorcio.txt'; --<-- UF por consorcio.txt
 --DELETE FROM consorcio.unidadFuncional; 
 --DBCC CHECKIDENT ('consorcio.unidadFuncional', RESEED, 0);
 EXEC consorcio.sp_importar_uf @RutaArchivoUF = @archivo_uf;
@@ -39,14 +39,14 @@ GO
 --select * from consorcio.unidadFuncional
 
 ------------------------------------CARGAR cuenta_origen EN unidadFuncional
-DECLARE @RutaArchivoC VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\consorcios\Inquilino-propietarios-UF.csv'; --<-- Inquilino-propietarios-UF.csv
+DECLARE @RutaArchivoC VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\Inquilino-propietarios-UF.csv'; --<-- Inquilino-propietarios-UF.csv
 EXEC consorcio.sp_asociar_cuentas_uf @RutaArchivoCuentas = @RutaArchivoC;
 --SELECT * FROM consorcio.unidadFuncional
 GO
 
 -------------------------------------CARGAR personaUF
-DECLARE @archivo_relacion_uf VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\consorcios\Inquilino-propietarios-UF.csv'; -- <---- RUTA Inquilino-propietarios-UF.csv
-DECLARE @archivo_datos_persona VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\consorcios\Inquilino-propietarios-datos.csv'; -- <---- RUTA Inquilino-propietarios-datos.csv
+DECLARE @archivo_relacion_uf VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\Inquilino-propietarios-UF.csv'; -- <---- RUTA Inquilino-propietarios-UF.csv
+DECLARE @archivo_datos_persona VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\Inquilino-propietarios-datos.csv'; -- <---- RUTA Inquilino-propietarios-datos.csv
 --DELETE FROM consorcio.personaUf;
 --DBCC CHECKIDENT ('consorcio.personaUf', RESEED, 0);
 EXEC consorcio.sp_importar_persona_uf 
@@ -56,7 +56,7 @@ GO
 --select * consorcio.from personaUF
 
 --------------------------------------------------CARGAR pago
-DECLARE @archivo_pagos VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\consorcios\pagos_consorcios.csv'; -- <---- RUTA pagos_consorcios.csv
+DECLARE @archivo_pagos VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\pagos_consorcios.csv'; -- <---- RUTA pagos_consorcios.csv
 --DELETE FROM consorcio.pago;
 --DBCC CHECKIDENT ('consorcio.pago', RESEED, 0);
 EXEC consorcio.sp_importar_pagos @RutaArchivoPagos = @archivo_pagos;
@@ -65,7 +65,7 @@ GO
 --select * from consorcio.pago
 
 ---------------------------------------------CARGAR proveedor
-DECLARE @archivo_provedores VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\Grupo2-Comision5600\datos varios 1(Proveedores).csv'; -- <---- RUTA datos varios 1(Proveedores).csv
+DECLARE @archivo_provedores VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\datos varios 1(Proveedores).csv'; -- <---- RUTA datos varios 1(Proveedores).csv
 --DELETE FROM consorcio.proveedor;
 --DBCC CHECKIDENT ('consorcio.proveedor', RESEED, 0);
 EXEC consorcio.sp_importar_proveedores @RutaArchivoProveedores = @archivo_provedores;
@@ -86,7 +86,7 @@ GO
 DECLARE @periodo_mes_test VARCHAR(12) = 'Mayo'; -- (Abril, Mayo, Junio)
 DECLARE @anio_test INT = 2025;             -- El año
 -- 2. Ejecutar el Stored Procedure
-EXEC consorcio.spGenerarExpensas    
+EXEC consorcio.sp_generar_expensas   
     @periodo_mes = @periodo_mes_test,
     @anio = @anio_test;
 GO 
@@ -94,11 +94,11 @@ GO
 DECLARE @periodo_mes_test VARCHAR(12) = 'Junio'; -- (Abril, Mayo, Junio)
 DECLARE @anio_test INT = 2025;             -- El año
 -- 2. Ejecutar el Stored Procedure
-EXEC consorcio.spGenerarExpensas    
+EXEC consorcio.sp_generar_expensas    
     @periodo_mes = @periodo_mes_test,
     @anio = @anio_test;
 GO 
---select * consorcio.from expensa
+--select * consorcio.from expensa;
 -- 3. Verificaci�n de Resultados
 /*SELECT 
     e.id_expensa,
@@ -141,7 +141,7 @@ WHERE
 select * from consorcio.gasto*/
 
 ------------------------------------------------CARGAR gastoOrdinario
-DECLARE @archivo NVARCHAR(4000) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\consorcios\Servicios.Servicios.json'; --<-- Servicios.Servicios.json
+DECLARE @archivo NVARCHAR(4000) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\Servicios.Servicios.json'; --<-- Servicios.Servicios.json
 --DELETE FROM consorcio.gastoOrdinario;
 --DBCC CHECKIDENT ('consorcio.gastoOrdinario', RESEED, 0);
 EXEC consorcio.sp_gastos_ordinarios @RutaArchivoJSON = @archivo;
@@ -149,7 +149,7 @@ GO
 --select * from consorcio.gastoOrdinario
 
 -----------------------------------------------CARGAR gastoExtraordinario
-DECLARE @archivo_gastosExtraordinarios VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\Grupo2-Comision5600\gastos_extraordinarios.csv'; --<----RUTA DE ACCESO a gastos_extraordinarios.csv
+DECLARE @archivo_gastosExtraordinarios VARCHAR(255) = 'C:\Unlam 2.0\Segundo año\Bdd aplicada\Trabajo práctico\SQL\TP_Final_Grupo02_Com5600\Grupo2-Comision5600\Archivos_importacion\gastos_extraordinarios.csv'; --<----RUTA DE ACCESO a gastos_extraordinarios.csv
 --DELETE FROM consorcio.gastoExtraordinario;
 --DBCC CHECKIDENT ('consorcio.gastoExtraordinario', RESEED, 0);
 EXEC consorcio.sp_importar_gastosExtraordinarios @RutaArchivo = @archivo_gastosExtraordinarios;

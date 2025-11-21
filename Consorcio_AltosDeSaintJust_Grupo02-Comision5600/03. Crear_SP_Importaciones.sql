@@ -1065,7 +1065,7 @@ BEGIN
     UPDATE ECP
     SET
         -- Calcular el SALDO PENDIENTE (Deuda) 
-        -- Nota: Usamos la columna 'deuda' para guardar el saldo final adeudado.
+        -- Usamos la columna 'deuda' para guardar el saldo final adeudado.
         ECP.deuda = ECP.total_pagar - ISNULL(ECP.pagos_recibidos, 0),
         
         -- Calcular el nuevo INTERÉS POR MORA
@@ -1075,7 +1075,7 @@ BEGIN
                 -- Si hay un saldo pendiente (Deuda)
                 WHEN ECP.total_pagar > ISNULL(ECP.pagos_recibidos, 0) THEN
                     -- Se llama a la función de mora para calcular el interés
-                    dbo.fn_CalcularInteresMora_Nuevo(
+                    consorcio.fn_CalcularInteresMora (
                         ECP.total_pagar - ISNULL(ECP.pagos_recibidos, 0), -- Monto a aplicar la mora (Deuda)
                         ECP.fecha_1er_venc,
                         ECP.fecha_2do_venc,

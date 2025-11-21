@@ -16,6 +16,9 @@ ACCIONES: generación de reportes
 -- USUARIOS SISTEMAS :
 -- * roman
 -- * ruso
+use Com5600G02
+go
+
 
 PRINT '--- PRUEBAS: Sistemas (user_roman_sys) ---';
 EXECUTE AS LOGIN = 'login_roman_sys';
